@@ -1,4 +1,4 @@
-#version 120
+#version 150
 
 #extension GL_ARB_gpu_shader5 : enable
 
@@ -12,11 +12,11 @@ uniform mat4 u_model;
 uniform mat4 u_view;
 uniform vec3 u_lightpos;
 
-varying out vec3 v_normal;
-varying out vec2 v_uv;
-varying out vec4 v_color;
-varying out vec3 v_fragPos;
-varying out vec3 v_lightDir;
+varying vec3 v_normal;
+varying vec2 v_uv;
+varying vec4 v_color;
+varying vec3 v_fragPos;
+varying vec3 v_lightDir;
 
 void main()
 {
