@@ -9,10 +9,11 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glext.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#define CTX_OPENGL_MAJOR 3
+#define CTX_OPENGL_MINOR 3
 
 #include "linmath.h"
 #include "gl2_util.h"
@@ -220,6 +221,9 @@ int main(int argc, char *argv[])
         glfwTerminate();
         exit( EXIT_FAILURE );
     }
+
+    glfwMakeContextCurrent(window);
+    gladLoadGL();
 
     glfwSetFramebufferSizeCallback(window, reshape);
     glfwSetKeyCallback(window, key);
