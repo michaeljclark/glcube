@@ -46,61 +46,50 @@ static void cube(vertex_buffer *vb, index_buffer *ib, float s, vec4f col)
      * front, right, top, left, bottom, back
      *
      * triangles = {0,1,2,2,1,3};
+     * quads     = {0,1,2,0,2,3};
      */
 
-    vertex vert[6*6] = {
+    vertex vertices[6*4] = {
         /* front */
         { { -s,  s,  S }, { 0, 0, 1 }, { 0, 1 }, { r, g, b, a } }, /* fr.tl */
         { { -s, -s,  S }, { 0, 0, 1 }, { 0, 0 }, { r, g, b, a } }, /* fr.bl */
         { {  s,  s,  S }, { 0, 0, 1 }, { 1, 1 }, { r, g, b, a } }, /* fr.tr */
-        { {  s,  s,  S }, { 0, 0, 1 }, { 1, 1 }, { r, g, b, a } }, /* fr.tr */
-        { { -s, -s,  S }, { 0, 0, 1 }, { 0, 0 }, { r, g, b, a } }, /* fr.bl */
         { {  s, -s,  S }, { 0, 0, 1 }, { 1, 0 }, { r, g, b, a } }, /* fr.br */
 
         /* right */
         { {  S, -s,  s }, { 1, 0, 0 }, { 0, 1 }, { r, g, b, a } }, /* ri.tl */
         { {  S, -s, -s }, { 1, 0, 0 }, { 0, 0 }, { r, g, b, a } }, /* ri.bl */
         { {  S,  s,  s }, { 1, 0, 0 }, { 1, 1 }, { r, g, b, a } }, /* ri.tr */
-        { {  S,  s,  s }, { 1, 0, 0 }, { 1, 1 }, { r, g, b, a } }, /* ri.tr */
-        { {  S, -s, -s }, { 1, 0, 0 }, { 0, 0 }, { r, g, b, a } }, /* ri.bl */
         { {  S,  s, -s }, { 1, 0, 0 }, { 1, 0 }, { r, g, b, a } }, /* ri.br */
 
         /* top */
         { {  s,  S, -s }, { 0, 1, 0 }, { 0, 1 }, { r, g, b, a } }, /* to.tl */
         { { -s,  S, -s }, { 0, 1, 0 }, { 0, 0 }, { r, g, b, a } }, /* to.bl */
         { {  s,  S,  s }, { 0, 1, 0 }, { 1, 1 }, { r, g, b, a } }, /* to.tr */
-        { {  s,  S,  s }, { 0, 1, 0 }, { 1, 1 }, { r, g, b, a } }, /* to.tr */
-        { { -s,  S, -s }, { 0, 1, 0 }, { 0, 0 }, { r, g, b, a } }, /* to.bl */
         { { -s,  S,  s }, { 0, 1, 0 }, { 1, 0 }, { r, g, b, a } }, /* to.br */
 
         /* left */
         { { -S,  s, -s }, {-1, 0, 0 }, { 0, 1 }, { r, g, b, a } }, /* le.tl */
         { { -S, -s, -s }, {-1, 0, 0 }, { 0, 0 }, { r, g, b, a } }, /* le.bl */
         { { -S,  s,  s }, {-1, 0, 0 }, { 1, 1 }, { r, g, b, a } }, /* le.tr */
-        { { -S,  s,  s }, {-1, 0, 0 }, { 1, 1 }, { r, g, b, a } }, /* le.tr */
-        { { -S, -s, -s }, {-1, 0, 0 }, { 0, 0 }, { r, g, b, a } }, /* le.bl */
         { { -S, -s,  s }, {-1, 0, 0 }, { 1, 0 }, { r, g, b, a } }, /* le.br */
 
         /* bottom */
         { { -s, -S,  s }, { 0,-1, 0 }, { 0, 1 }, { r, g, b, a } }, /* bo.tl */
         { { -s, -S, -s }, { 0,-1, 0 }, { 0, 0 }, { r, g, b, a } }, /* bo.bl */
         { {  s, -S,  s }, { 0,-1, 0 }, { 1, 1 }, { r, g, b, a } }, /* bo.tr */
-        { {  s, -S,  s }, { 0,-1, 0 }, { 1, 1 }, { r, g, b, a } }, /* bo.tr */
-        { { -s, -S, -s }, { 0,-1, 0 }, { 0, 0 }, { r, g, b, a } }, /* bo.bl */
         { {  s, -S, -s }, { 0,-1, 0 }, { 1, 0 }, { r, g, b, a } }, /* bo.br */
 
         /* back */
         { {  s, -s, -S }, { 0, 0,-1 }, { 0, 1 }, { r, g, b, a } }, /* ba.tl */
         { { -s, -s, -S }, { 0, 0,-1 }, { 0, 0 }, { r, g, b, a } }, /* ba.bl */
         { {  s,  s, -S }, { 0, 0,-1 }, { 1, 1 }, { r, g, b, a } }, /* ba.tr */
-        { {  s,  s, -S }, { 0, 0,-1 }, { 1, 1 }, { r, g, b, a } }, /* ba.tr */
-        { { -s, -s, -S }, { 0, 0,-1 }, { 0, 0 }, { r, g, b, a } }, /* ba.bl */
         { { -s,  s, -S }, { 0, 0,-1 }, { 1, 0 }, { r, g, b, a } }, /* ba.br */
     };
 
     idx = vertex_buffer_count(vb);
-    for (int i = 0; i < 36; i++) vertex_buffer_add(vb, vert[i]);
-    index_buffer_add_primitves(ib, primitive_topology_triangles, 18, idx);
+    for (int i = 0; i < 24; i++) vertex_buffer_add(vb, vertices[i]);
+    index_buffer_add_primitves(ib, primitive_topology_quad_strip, 12, idx);
 
     if (debug_vertices) {
         vertex_buffer_dump(vb);
