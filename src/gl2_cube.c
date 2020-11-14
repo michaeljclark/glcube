@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 
+#include <stdbool.h>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -24,8 +26,8 @@ static const char* vert_shader_filename = "shaders/cube.vsh";
 static GLfloat view_dist = -40.0f;
 static GLfloat view_rotx = 20.f, view_roty = 30.f, view_rotz = 0.f;
 static GLfloat angle = 0.f;
-static int animate_enable = 1;
-static int debug_vertices = 0;
+static bool animate_enable = 0;
+static bool debug_vertices = 0;
 
 static GLuint program;
 static GLuint vao[1];
@@ -35,6 +37,16 @@ static vertex_buffer vb[1];
 static index_buffer ib[1];
 static mat4x4 gm[1];
 static mat4x4 m, v, p, mvp;
+
+typedef struct {
+    float zoom;
+    vec2 mouse_pos;
+    vec2 origin;
+} zoom_state;
+static zoom_state state = { 32.0f }, state_save;
+static const float min_zoom = 16.0f, max_zoom = 32768.0f;
+static bool mouse_left_drag = false;
+static bool mouse_right_drag = false;
 
 static void cube(vertex_buffer *vb, index_buffer *ib, float s, vec4f col)
 {
@@ -98,12 +110,12 @@ static void cube(vertex_buffer *vb, index_buffer *ib, float s, vec4f col)
 
 static void draw()
 {
-    mat4x4_translate(v, 0.0, 0.0, view_dist);
+    //mat4x4_translate(v, 0.0, 0.0, view_dist);
+    mat4x4_translate(v, 0.0, 0.0, -state.zoom);
     mat4x4_rotate(v, v, 1.0, 0.0, 0.0, (view_rotx / 180) * M_PI);
     mat4x4_rotate(v, v, 0.0, 1.0, 0.0, (view_roty / 180) * M_PI);
     mat4x4_rotate(v, v, 0.0, 0.0, 1.0, (view_rotz / 180) * M_PI);
-
-    mat4x4_translate(m, 0.0, 0.0, 0.0);
+    mat4x4_translate(m, state.origin[0]*0.01f, state.origin[1]*0.01f, 0.0);
     mat4x4_rotate_Y(gm[0], m, (angle / 180) * M_PI);
 
     glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -152,8 +164,62 @@ void reshape( GLFWwindow* window, int width, int height )
     GLfloat h = (GLfloat) height / (GLfloat) width;
 
     glViewport(0, 0, (GLint) width, (GLint) height);
-    mat4x4_frustum(p, -1.0, 1.0, -h, h, 5.0, 60.0);
+    mat4x4_frustum(p, -1.0, 1.0, -h, h, 5.0, 1e9);
     uniform_matrix_4fv("u_projection", (const GLfloat *)p);
+}
+
+/* mouse callbacks */
+
+static void scroll(GLFWwindow* window, double xoffset, double yoffset)
+{
+    float quantum = state.zoom / 16.0f;
+    float ratio = 1.0f + (float)quantum / (float)state.zoom;
+    if (yoffset < 0 && state.zoom < max_zoom) {
+        state.origin[0] *= ratio;
+        state.origin[1] *= ratio;
+        state.zoom += quantum;
+    } else if (yoffset > 0 && state.zoom > min_zoom) {
+        state.origin[0] /= ratio;
+        state.origin[1] /= ratio;
+        state.zoom -= quantum;
+    }
+}
+
+static void mouse_button(GLFWwindow* window, int button, int action, int mods)
+{
+    switch (button) {
+    case GLFW_MOUSE_BUTTON_LEFT:
+        mouse_left_drag = (action == GLFW_PRESS);
+        state_save = state;
+        break;
+    case GLFW_MOUSE_BUTTON_RIGHT:
+        mouse_right_drag = (action == GLFW_PRESS);
+        state_save = state;
+        break;
+    }
+}
+
+static void cursor_position(GLFWwindow* window, double xpos, double ypos)
+{
+    state.mouse_pos[0] = xpos;
+    state.mouse_pos[1] = ypos;
+
+    if (mouse_left_drag) {
+        state.origin[0] += state.mouse_pos[0] - state_save.mouse_pos[0];
+        state.origin[1] += state.mouse_pos[1] - state_save.mouse_pos[1];
+        state_save.mouse_pos[0] = state.mouse_pos[0];
+        state_save.mouse_pos[1] = state.mouse_pos[1];
+    }
+    if (mouse_right_drag) {
+        float delta0 = state.mouse_pos[0] - state_save.mouse_pos[0];
+        float delta1 = state.mouse_pos[1] - state_save.mouse_pos[1];
+        float zoom = state_save.zoom * powf(65.0f/64.0f,(float)-delta1);
+        if (zoom != state.zoom && zoom > min_zoom && zoom < max_zoom) {
+            state.zoom = zoom;
+            state.origin[0] = (state.origin[0] * (zoom / state.zoom));
+            state.origin[1] = (state.origin[1] * (zoom / state.zoom));
+        }
+    }
 }
 
 static void init()
@@ -216,9 +282,13 @@ int main(int argc, char *argv[])
 
     glfwSetFramebufferSizeCallback(window, reshape);
     glfwSetKeyCallback(window, key);
+    glfwSetScrollCallback(window, scroll);
+    glfwSetMouseButtonCallback(window, mouse_button);
+    glfwSetCursorPosCallback(window, cursor_position);
     glfwMakeContextCurrent(window);
     glfwGetFramebufferSize(window, &width, &height);
     glfwSwapInterval(1);
+    glfwSetWindowOpacity(window, 0.99f);
 
     init();
     reshape(window, width, height);
