@@ -131,7 +131,7 @@ static void model_object_draw(model_object_t *mo)
 
 static void draw()
 {
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClearColor(1.0, 1.0, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     model_view_pos(-state.zoom, view_rotx, view_roty, view_rotz);
@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 
-    window = glfwCreateWindow( 1024, 1024, "GL2 Cube", NULL, NULL );
+    window = glfwCreateWindow( 1024, 1024, "OpenGL Cube", NULL, NULL );
     if (!window)
     {
         fprintf( stderr, "Failed to open GLFW window\n" );
