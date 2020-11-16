@@ -61,16 +61,25 @@ static void cube(vertex_buffer *vb, index_buffer *ib, float s, vec4f col)
         /* back */   { { 0, 1, 0 }, { 1, 0, 0 }, { 0, 0,-1 }, }
     };
 
+    const vertex t[4] = {
+        { { -s,  s,  s }, { 0, 0, 1 }, { 0, 1 }, { r, g, b, a } },
+        { { -s, -s,  s }, { 0, 0, 1 }, { 0, 0 }, { r, g, b, a } },
+        { {  s,  s,  s }, { 0, 0, 1 }, { 1, 1 }, { r, g, b, a } },
+        { {  s, -s,  s }, { 0, 0, 1 }, { 1, 0 }, { r, g, b, a } },
+    };
+
     uint idx = vertex_buffer_count(vb);
-    for (int i = 0; i < 24; i++) {
-        int n = i >> 2, U = !!(i&2), V = !(i&1);
-        float x = (U ? s : -s), y = (V ? s : -s), z = s;
-        vertex v = { { f[n][0][0]*x + f[n][0][1]*y + f[n][0][2]*z,
-                       f[n][1][0]*x + f[n][1][1]*y + f[n][1][2]*z,
-                       f[n][2][0]*x + f[n][2][1]*y + f[n][2][2]*z },
-                     { f[n][0][2], f[n][1][2], f[n][2][2] },
-                     { (float)U, (float)V }, { r, g, b, a } };
-        vertex_buffer_add(vb, v);
+    for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 4; j++) {
+            vertex v = t[j];
+            v.p.x = f[i][0][0]*t[j].p.x + f[i][0][1]*t[j].p.y + f[i][0][2]*t[j].p.z;
+            v.p.y = f[i][1][0]*t[j].p.x + f[i][1][1]*t[j].p.y + f[i][1][2]*t[j].p.z;
+            v.p.z = f[i][2][0]*t[j].p.x + f[i][2][1]*t[j].p.y + f[i][2][2]*t[j].p.z;
+            v.n.x = f[i][0][0]*t[j].n.x + f[i][0][1]*t[j].n.y + f[i][0][2]*t[j].n.z;
+            v.n.y = f[i][1][0]*t[j].n.x + f[i][1][1]*t[j].n.y + f[i][1][2]*t[j].n.z;
+            v.n.z = f[i][2][0]*t[j].n.x + f[i][2][1]*t[j].n.y + f[i][2][2]*t[j].n.z;
+            vertex_buffer_add(vb, v);
+        }
     }
     index_buffer_add_primitves(ib, primitive_topology_quad_strip, 12, idx);
 
