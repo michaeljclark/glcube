@@ -47,10 +47,10 @@ typedef struct
 
 typedef struct
 {
-    vec3f pos;
-    vec3f norm;
-    vec2f uv;
-    vec4f col;
+    vec3f p;
+    vec3f n;
+    vec2f t;
+    vec4f c;
 } vertex;
 
 typedef struct
@@ -158,14 +158,14 @@ static void vertex_buffer_dump(vertex_buffer *vb)
     for (size_t i = 0; i < count; i++) {
         vertex *v = vb->data + i;
         printf("  [%7zu] = { "
-            ".pos = {%5.3f,%5.3f,%5.3f}, "
-            ".norm = {%5.3f,%5.3f,%5.3f}, "
-            ".uv = {%5.3f,%5.3f}, "
-            ".col = {%5.3f,%5.3f,%5.3f,%5.3f} }\n",
-            i, v->pos.vec[0], v->pos.vec[1], v->pos.vec[2],
-            v->norm.vec[0], v->norm.vec[1], v->norm.vec[2],
-            v->uv.vec[0], v->uv.vec[1],
-            v->col.vec[0], v->col.vec[1], v->col.vec[2], v->col.vec[3]);
+            ".p = {%5.1f,%5.1f,%5.1f}, "
+            ".n = {%5.1f,%5.1f,%5.1f}, "
+            ".t = {%5.1f,%5.1f}, "
+            ".c = {%5.1f,%5.1f,%5.1f,%5.1f} }\n",
+            i, v->p.vec[0], v->p.vec[1], v->p.vec[2],
+            v->n.vec[0], v->n.vec[1], v->n.vec[2],
+            v->t.vec[0], v->t.vec[1],
+            v->c.vec[0], v->c.vec[1], v->c.vec[2], v->c.vec[3]);
     }
     printf("}\n");
 }

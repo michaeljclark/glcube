@@ -50,56 +50,42 @@ static bool mouse_right_drag = false;
 
 static void cube(vertex_buffer *vb, index_buffer *ib, float s, vec4f col)
 {
-    uint idx;
-    float S = s;
     float r = col.r, g = col.g, b = col.b, a = col.a;
 
-    /*
-     * front, right, top, left, bottom, back
-     *
-     * triangles = {0,1,2,2,1,3};
-     * quads     = {0,1,2,0,2,3};
-     */
-
-    vertex vertices[6*4] = {
+    const vertex vertices[24] = {
         /* front */
-        { { -s,  s,  S }, { 0, 0, 1 }, { 0, 1 }, { r, g, b, a } }, /* fr.tl */
-        { { -s, -s,  S }, { 0, 0, 1 }, { 0, 0 }, { r, g, b, a } }, /* fr.bl */
-        { {  s,  s,  S }, { 0, 0, 1 }, { 1, 1 }, { r, g, b, a } }, /* fr.tr */
-        { {  s, -s,  S }, { 0, 0, 1 }, { 1, 0 }, { r, g, b, a } }, /* fr.br */
-
+        { { -s,  s,  s }, { 0, 0, 1 }, { 0, 1 }, { r, g, b, a } },
+        { { -s, -s,  s }, { 0, 0, 1 }, { 0, 0 }, { r, g, b, a } },
+        { {  s,  s,  s }, { 0, 0, 1 }, { 1, 1 }, { r, g, b, a } },
+        { {  s, -s,  s }, { 0, 0, 1 }, { 1, 0 }, { r, g, b, a } },
         /* right */
-        { {  S, -s,  s }, { 1, 0, 0 }, { 0, 1 }, { r, g, b, a } }, /* ri.tl */
-        { {  S, -s, -s }, { 1, 0, 0 }, { 0, 0 }, { r, g, b, a } }, /* ri.bl */
-        { {  S,  s,  s }, { 1, 0, 0 }, { 1, 1 }, { r, g, b, a } }, /* ri.tr */
-        { {  S,  s, -s }, { 1, 0, 0 }, { 1, 0 }, { r, g, b, a } }, /* ri.br */
-
+        { {  s, -s,  s }, { 1, 0, 0 }, { 0, 1 }, { r, g, b, a } },
+        { {  s, -s, -s }, { 1, 0, 0 }, { 0, 0 }, { r, g, b, a } },
+        { {  s,  s,  s }, { 1, 0, 0 }, { 1, 1 }, { r, g, b, a } },
+        { {  s,  s, -s }, { 1, 0, 0 }, { 1, 0 }, { r, g, b, a } },
         /* top */
-        { {  s,  S, -s }, { 0, 1, 0 }, { 0, 1 }, { r, g, b, a } }, /* to.tl */
-        { { -s,  S, -s }, { 0, 1, 0 }, { 0, 0 }, { r, g, b, a } }, /* to.bl */
-        { {  s,  S,  s }, { 0, 1, 0 }, { 1, 1 }, { r, g, b, a } }, /* to.tr */
-        { { -s,  S,  s }, { 0, 1, 0 }, { 1, 0 }, { r, g, b, a } }, /* to.br */
-
+        { {  s,  s, -s }, { 0, 1, 0 }, { 0, 1 }, { r, g, b, a } },
+        { { -s,  s, -s }, { 0, 1, 0 }, { 0, 0 }, { r, g, b, a } },
+        { {  s,  s,  s }, { 0, 1, 0 }, { 1, 1 }, { r, g, b, a } },
+        { { -s,  s,  s }, { 0, 1, 0 }, { 1, 0 }, { r, g, b, a } },
         /* left */
-        { { -S,  s, -s }, {-1, 0, 0 }, { 0, 1 }, { r, g, b, a } }, /* le.tl */
-        { { -S, -s, -s }, {-1, 0, 0 }, { 0, 0 }, { r, g, b, a } }, /* le.bl */
-        { { -S,  s,  s }, {-1, 0, 0 }, { 1, 1 }, { r, g, b, a } }, /* le.tr */
-        { { -S, -s,  s }, {-1, 0, 0 }, { 1, 0 }, { r, g, b, a } }, /* le.br */
-
+        { { -s,  s, -s }, {-1, 0, 0 }, { 0, 1 }, { r, g, b, a } },
+        { { -s, -s, -s }, {-1, 0, 0 }, { 0, 0 }, { r, g, b, a } },
+        { { -s,  s,  s }, {-1, 0, 0 }, { 1, 1 }, { r, g, b, a } },
+        { { -s, -s,  s }, {-1, 0, 0 }, { 1, 0 }, { r, g, b, a } },
         /* bottom */
-        { { -s, -S,  s }, { 0,-1, 0 }, { 0, 1 }, { r, g, b, a } }, /* bo.tl */
-        { { -s, -S, -s }, { 0,-1, 0 }, { 0, 0 }, { r, g, b, a } }, /* bo.bl */
-        { {  s, -S,  s }, { 0,-1, 0 }, { 1, 1 }, { r, g, b, a } }, /* bo.tr */
-        { {  s, -S, -s }, { 0,-1, 0 }, { 1, 0 }, { r, g, b, a } }, /* bo.br */
-
+        { { -s, -s,  s }, { 0,-1, 0 }, { 0, 1 }, { r, g, b, a } },
+        { { -s, -s, -s }, { 0,-1, 0 }, { 0, 0 }, { r, g, b, a } },
+        { {  s, -s,  s }, { 0,-1, 0 }, { 1, 1 }, { r, g, b, a } },
+        { {  s, -s, -s }, { 0,-1, 0 }, { 1, 0 }, { r, g, b, a } },
         /* back */
-        { {  s, -s, -S }, { 0, 0,-1 }, { 0, 1 }, { r, g, b, a } }, /* ba.tl */
-        { { -s, -s, -S }, { 0, 0,-1 }, { 0, 0 }, { r, g, b, a } }, /* ba.bl */
-        { {  s,  s, -S }, { 0, 0,-1 }, { 1, 1 }, { r, g, b, a } }, /* ba.tr */
-        { { -s,  s, -S }, { 0, 0,-1 }, { 1, 0 }, { r, g, b, a } }, /* ba.br */
+        { {  s, -s, -s }, { 0, 0,-1 }, { 0, 1 }, { r, g, b, a } },
+        { { -s, -s, -s }, { 0, 0,-1 }, { 0, 0 }, { r, g, b, a } },
+        { {  s,  s, -s }, { 0, 0,-1 }, { 1, 1 }, { r, g, b, a } },
+        { { -s,  s, -s }, { 0, 0,-1 }, { 1, 0 }, { r, g, b, a } },
     };
 
-    idx = vertex_buffer_count(vb);
+    uint idx = vertex_buffer_count(vb);
     for (int i = 0; i < 24; i++) vertex_buffer_add(vb, vertices[i]);
     index_buffer_add_primitves(ib, primitive_topology_quad_strip, 12, idx);
 
@@ -241,10 +227,10 @@ static void init()
     glBindVertexArray(vao[0]);
     vertex_buffer_create(&vbo[0], GL_ARRAY_BUFFER, vb[0].data, vb[0].count * sizeof(vertex));
     vertex_buffer_create(&ibo[0], GL_ELEMENT_ARRAY_BUFFER, ib[0].data, ib[0].count * sizeof(uint));
-    vertex_array_pointer("a_pos", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,pos));
-    vertex_array_pointer("a_normal", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,norm));
-    vertex_array_pointer("a_uv", 2, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,uv));
-    vertex_array_pointer("a_color", 4, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,col));
+    vertex_array_pointer("a_pos", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,p));
+    vertex_array_pointer("a_normal", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,n));
+    vertex_array_pointer("a_uv", 2, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,t));
+    vertex_array_pointer("a_color", 4, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,c));
 
     /* set light position uniform */
     glUseProgram(program);
