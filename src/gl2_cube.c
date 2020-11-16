@@ -141,10 +141,16 @@ static void draw()
     model_object_draw(&mo[0]);
 }
 
+static float last_time, current_time, delta_time;
+
 static void animate()
 {
+    last_time = current_time;
+    current_time = (float) glfwGetTime();
+    delta_time = current_time - last_time;
+
     if (animate_enable) {
-        angle = 100.f * (float) glfwGetTime();
+        angle += 100.f * delta_time;
     }
 }
 
@@ -298,8 +304,8 @@ int main(int argc, char *argv[])
     reshape(window, width, height);
 
     while(!glfwWindowShouldClose(window)) {
-        draw(&mo[0]);
         animate();
+        draw(&mo[0]);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
