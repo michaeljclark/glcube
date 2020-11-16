@@ -52,41 +52,26 @@ static void cube(vertex_buffer *vb, index_buffer *ib, float s, vec4f col)
 {
     float r = col.r, g = col.g, b = col.b, a = col.a;
 
-    const vertex vertices[24] = {
-        /* front */
-        { { -s,  s,  s }, { 0, 0, 1 }, { 0, 1 }, { r, g, b, a } },
-        { { -s, -s,  s }, { 0, 0, 1 }, { 0, 0 }, { r, g, b, a } },
-        { {  s,  s,  s }, { 0, 0, 1 }, { 1, 1 }, { r, g, b, a } },
-        { {  s, -s,  s }, { 0, 0, 1 }, { 1, 0 }, { r, g, b, a } },
-        /* right */
-        { {  s, -s,  s }, { 1, 0, 0 }, { 0, 1 }, { r, g, b, a } },
-        { {  s, -s, -s }, { 1, 0, 0 }, { 0, 0 }, { r, g, b, a } },
-        { {  s,  s,  s }, { 1, 0, 0 }, { 1, 1 }, { r, g, b, a } },
-        { {  s,  s, -s }, { 1, 0, 0 }, { 1, 0 }, { r, g, b, a } },
-        /* top */
-        { {  s,  s, -s }, { 0, 1, 0 }, { 0, 1 }, { r, g, b, a } },
-        { { -s,  s, -s }, { 0, 1, 0 }, { 0, 0 }, { r, g, b, a } },
-        { {  s,  s,  s }, { 0, 1, 0 }, { 1, 1 }, { r, g, b, a } },
-        { { -s,  s,  s }, { 0, 1, 0 }, { 1, 0 }, { r, g, b, a } },
-        /* left */
-        { { -s,  s, -s }, {-1, 0, 0 }, { 0, 1 }, { r, g, b, a } },
-        { { -s, -s, -s }, {-1, 0, 0 }, { 0, 0 }, { r, g, b, a } },
-        { { -s,  s,  s }, {-1, 0, 0 }, { 1, 1 }, { r, g, b, a } },
-        { { -s, -s,  s }, {-1, 0, 0 }, { 1, 0 }, { r, g, b, a } },
-        /* bottom */
-        { { -s, -s,  s }, { 0,-1, 0 }, { 0, 1 }, { r, g, b, a } },
-        { { -s, -s, -s }, { 0,-1, 0 }, { 0, 0 }, { r, g, b, a } },
-        { {  s, -s,  s }, { 0,-1, 0 }, { 1, 1 }, { r, g, b, a } },
-        { {  s, -s, -s }, { 0,-1, 0 }, { 1, 0 }, { r, g, b, a } },
-        /* back */
-        { {  s, -s, -s }, { 0, 0,-1 }, { 0, 1 }, { r, g, b, a } },
-        { { -s, -s, -s }, { 0, 0,-1 }, { 0, 0 }, { r, g, b, a } },
-        { {  s,  s, -s }, { 0, 0,-1 }, { 1, 1 }, { r, g, b, a } },
-        { { -s,  s, -s }, { 0, 0,-1 }, { 1, 0 }, { r, g, b, a } },
+    const float f[6][3][3] = {
+        /* front */  { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 }, },
+        /* right */  { { 0, 0, 1 }, { 1, 0, 0 }, { 0, 1, 0 }, },
+        /* top */    { { 0, 1, 0 }, { 0, 0, 1 }, { 1, 0, 0 }, },
+        /* left */   { { 0, 0,-1 }, { 0, 1, 0 }, { 1, 0, 0 }, },
+        /* bottom */ { { 1, 0, 0 }, { 0, 0,-1 }, { 0, 1, 0 }, },
+        /* back */   { { 0, 1, 0 }, { 1, 0, 0 }, { 0, 0,-1 }, }
     };
 
     uint idx = vertex_buffer_count(vb);
-    for (int i = 0; i < 24; i++) vertex_buffer_add(vb, vertices[i]);
+    for (int i = 0; i < 24; i++) {
+        int n = i >> 2, U = !!(i&2), V = !(i&1);
+        float x = (U ? s : -s), y = (V ? s : -s), z = s;
+        vertex v = { { f[n][0][0]*x + f[n][0][1]*y + f[n][0][2]*z,
+                       f[n][1][0]*x + f[n][1][1]*y + f[n][1][2]*z,
+                       f[n][2][0]*x + f[n][2][1]*y + f[n][2][2]*z },
+                     { f[n][0][2], f[n][1][2], f[n][2][2] },
+                     { (float)U, (float)V }, { r, g, b, a } };
+        vertex_buffer_add(vb, v);
+    }
     index_buffer_add_primitves(ib, primitive_topology_quad_strip, 12, idx);
 
     if (debug_vertices) {
