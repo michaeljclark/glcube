@@ -20,35 +20,55 @@
 #include "linmath.h"
 #include "gl2_util.h"
 
+typedef struct model_object {
+    GLuint vao;
+    GLuint vbo;
+    GLuint ibo;
+    vertex_buffer vb;
+    index_buffer ib;
+    mat4x4 m;
+} model_object_t;
+
+typedef struct zoom_state {
+    float zoom;
+    vec2 mouse_pos;
+    vec2 origin;
+} zoom_state_t;
+
 static const char* frag_shader_filename = "shaders/cube.fsh";
 static const char* vert_shader_filename = "shaders/cube.vsh";
 
-static GLfloat view_dist = -40.0f;
 static GLfloat view_rotx = 20.f, view_roty = 30.f, view_rotz = 0.f;
 static GLfloat angle = 0.f;
 static bool animate_enable = 0;
 static bool debug_vertices = 0;
-
 static GLuint program;
-static GLuint vao[1];
-static GLuint vbo[1];
-static GLuint ibo[1];
-static vertex_buffer vb[1];
-static index_buffer ib[1];
-static mat4x4 gm[1];
-static mat4x4 m, v, p, mvp;
-
-typedef struct {
-    float zoom;
-    vec2 mouse_pos;
-    vec2 origin;
-} zoom_state;
-static zoom_state state = { 32.0f }, state_save;
+static mat4x4 v, p;
+static model_object_t mo[1];
+static zoom_state_t state = { 32.0f }, state_save;
 static const float min_zoom = 16.0f, max_zoom = 32768.0f;
 static bool mouse_left_drag = false;
 static bool mouse_right_drag = false;
 
-static void cube(vertex_buffer *vb, index_buffer *ib, float s, vec4f col)
+static void model_object_init(model_object_t *mo)
+{
+    vertex_buffer_init(&mo->vb);
+    index_buffer_init(&mo->ib);
+}
+
+static void model_object_freeze(model_object_t *mo)
+{
+    glGenVertexArrays(1, &mo->vao);
+    glBindVertexArray(mo->vao);
+    vertex_buffer_create(&mo->vbo, GL_ARRAY_BUFFER, mo->vb.data, mo->vb.count * sizeof(vertex));
+    vertex_buffer_create(&mo->ibo, GL_ELEMENT_ARRAY_BUFFER, mo->ib.data, mo->ib.count * sizeof(uint));
+    vertex_array_pointer("a_pos", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,p));
+    vertex_array_pointer("a_normal", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,n));
+    vertex_array_pointer("a_uv", 2, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,t));
+    vertex_array_pointer("a_color", 4, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,c));
+}
+
+static void model_object_cube(model_object_t *mo, float s, vec4f col)
 {
     float r = col.r, g = col.g, b = col.b, a = col.a;
 
@@ -68,7 +88,7 @@ static void cube(vertex_buffer *vb, index_buffer *ib, float s, vec4f col)
         { {  s, -s,  s }, { 0, 0, 1 }, { 1, 0 }, { r, g, b, a } },
     };
 
-    uint idx = vertex_buffer_count(vb);
+    uint idx = vertex_buffer_count(&mo->vb);
     for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 4; j++) {
             vertex v = t[j];
@@ -78,36 +98,47 @@ static void cube(vertex_buffer *vb, index_buffer *ib, float s, vec4f col)
             v.n.x = f[i][0][0]*t[j].n.x + f[i][0][1]*t[j].n.y + f[i][0][2]*t[j].n.z;
             v.n.y = f[i][1][0]*t[j].n.x + f[i][1][1]*t[j].n.y + f[i][1][2]*t[j].n.z;
             v.n.z = f[i][2][0]*t[j].n.x + f[i][2][1]*t[j].n.y + f[i][2][2]*t[j].n.z;
-            vertex_buffer_add(vb, v);
+            vertex_buffer_add(&mo->vb, v);
         }
     }
-    index_buffer_add_primitves(ib, primitive_topology_quad_strip, 12, idx);
+    index_buffer_add_primitves(&mo->ib, primitive_topology_quad_strip, 12, idx);
+}
 
-    if (debug_vertices) {
-        vertex_buffer_dump(vb);
-    }
+static void model_view_pos(float zoom, float rotx, float roty, float rotz)
+{
+    mat4x4_translate(v, 0.0, 0.0, zoom);
+    mat4x4_rotate(v, v, 1.0, 0.0, 0.0, (rotx / 180) * M_PI);
+    mat4x4_rotate(v, v, 0.0, 1.0, 0.0, (roty / 180) * M_PI);
+    mat4x4_rotate(v, v, 0.0, 0.0, 1.0, (rotz / 180) * M_PI);
+}
+
+static void model_object_pos(model_object_t *mo,float angle,
+    float posx, float posy, float posz)
+{
+    mat4x4 m;
+    mat4x4_translate(m, posx, posy, posz);
+    mat4x4_rotate_Y(mo->m, m, (angle / 180) * M_PI);
+}
+
+static void model_object_draw(model_object_t *mo)
+{
+    glBindVertexArray(mo->vao);
+    glBindBuffer(GL_ARRAY_BUFFER, mo->vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mo->ibo);
+    glBindVertexArray(mo->vao);
+    glDrawElements(GL_TRIANGLES, (GLsizei)mo->ib.count, GL_UNSIGNED_INT, (void*)0);
 }
 
 static void draw()
 {
-    //mat4x4_translate(v, 0.0, 0.0, view_dist);
-    mat4x4_translate(v, 0.0, 0.0, -state.zoom);
-    mat4x4_rotate(v, v, 1.0, 0.0, 0.0, (view_rotx / 180) * M_PI);
-    mat4x4_rotate(v, v, 0.0, 1.0, 0.0, (view_roty / 180) * M_PI);
-    mat4x4_rotate(v, v, 0.0, 0.0, 1.0, (view_rotz / 180) * M_PI);
-    mat4x4_translate(m, state.origin[0]*0.01f, state.origin[1]*0.01f, 0.0);
-    mat4x4_rotate_Y(gm[0], m, (angle / 180) * M_PI);
-
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glBindVertexArray(vao[0]);
-    uniform_matrix_4fv("u_model", (const GLfloat *)gm[0]);
+    model_view_pos(-state.zoom, view_rotx, view_roty, view_rotz);
+    model_object_pos(&mo[0], angle, state.origin[0]*0.01f, state.origin[1]*0.01f, 0.0);
+    uniform_matrix_4fv("u_model", (const GLfloat *)mo->m);
     uniform_matrix_4fv("u_view", (const GLfloat *)v);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
-    glBindVertexArray(vao[0]);
-    glDrawElements(GL_TRIANGLES, (GLsizei)ib[0].count, GL_UNSIGNED_INT, (void*)0);
+    model_object_draw(&mo[0]);
 }
 
 static void animate()
@@ -125,7 +156,6 @@ void key( GLFWwindow* window, int k, int s, int action, int mods )
 
     switch (k) {
     case GLFW_KEY_A:     animate_enable = !animate_enable; break;
-    case GLFW_KEY_C:     view_dist += 5.0 * modm; break;
     case GLFW_KEY_Z:     view_rotz += 5.0 * modm; break;
     case GLFW_KEY_UP:    view_rotx += 5.0; break;
     case GLFW_KEY_DOWN:  view_rotx -= 5.0; break;
@@ -211,20 +241,14 @@ static void init()
     fsh = compile_shader(GL_FRAGMENT_SHADER, frag_shader_filename);
     program = link_program(vsh, fsh);
 
-    /* create cube vertex and index buffers */
-    vertex_buffer_init(&vb[0]);
-    index_buffer_init(&ib[0]);
-    cube(&vb[0], &ib[0], 3.0f, (vec4f){0.3f, 0.3f, 0.3f, 1.f});
+    /* create cube vertex and index buffers and buffer objects */
+    model_object_init(&mo[0]);
+    model_object_cube(&mo[0], 3.0f, (vec4f){0.3f, 0.3f, 0.3f, 1.f});
+    model_object_freeze(&mo[0]);
 
-    /* create vertex array, vertex buffer and index buffer objects */
-    glGenVertexArrays(1, &vao[0]);
-    glBindVertexArray(vao[0]);
-    vertex_buffer_create(&vbo[0], GL_ARRAY_BUFFER, vb[0].data, vb[0].count * sizeof(vertex));
-    vertex_buffer_create(&ibo[0], GL_ELEMENT_ARRAY_BUFFER, ib[0].data, ib[0].count * sizeof(uint));
-    vertex_array_pointer("a_pos", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,p));
-    vertex_array_pointer("a_normal", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,n));
-    vertex_array_pointer("a_uv", 2, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,t));
-    vertex_array_pointer("a_color", 4, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,c));
+    if (debug_vertices) {
+        vertex_buffer_dump(&mo[0].vb);
+    }
 
     /* set light position uniform */
     glUseProgram(program);
@@ -274,7 +298,7 @@ int main(int argc, char *argv[])
     reshape(window, width, height);
 
     while(!glfwWindowShouldClose(window)) {
-        draw();
+        draw(&mo[0]);
         animate();
         glfwSwapBuffers(window);
         glfwPollEvents();
