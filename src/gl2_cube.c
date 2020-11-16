@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <stdbool.h>
 
 #include <glad/glad.h>
