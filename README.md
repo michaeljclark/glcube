@@ -6,3 +6,11 @@ vertex and index buffer abstraction, functions for loading and compiling
 shaders plus basic mouse navigation with pan and zoom.
 
 ![glcube](/images/glcube.png)
+
+## Build Instructions
+
+```
+sudo apt-get install -y cmake ninja-build
+cmake -G Ninja -B build .
+cmake --build build
+```
