@@ -125,7 +125,6 @@ static void model_object_draw(model_object_t *mo)
     glBindVertexArray(mo->vao);
     glBindBuffer(GL_ARRAY_BUFFER, mo->vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mo->ibo);
-    glBindVertexArray(mo->vao);
     glDrawElements(GL_TRIANGLES, (GLsizei)mo->ib.count, GL_UNSIGNED_INT, (void*)0);
 }
 
