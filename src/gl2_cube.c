@@ -106,10 +106,10 @@ static void model_object_cube(model_object_t *mo, float s, vec4f col)
 
 static void model_view_pos(float zoom, vec3f rot)
 {
-    mat4x4_translate(v, 0.0, 0.0, zoom);
-    mat4x4_rotate(v, v, 1.0, 0.0, 0.0, (rot.x / 180) * M_PI);
-    mat4x4_rotate(v, v, 0.0, 1.0, 0.0, (rot.y / 180) * M_PI);
-    mat4x4_rotate(v, v, 0.0, 0.0, 1.0, (rot.z / 180) * M_PI);
+    mat4x4_translate(v, 0.f, 0.f, zoom);
+    mat4x4_rotate(v, v, 1.f, 0.f, 0.f, (rot.x / 180.f) * M_PI);
+    mat4x4_rotate(v, v, 0.f, 1.f, 0.f, (rot.y / 180.f) * M_PI);
+    mat4x4_rotate(v, v, 0.f, 0.f, 1.f, (rot.z / 180.f) * M_PI);
 }
 
 static void model_object_pos(model_object_t *mo,float angle,
@@ -131,11 +131,11 @@ static void model_object_draw(model_object_t *mo)
 
 static void draw()
 {
-    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClearColor(1.f, 1.f, 1.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     model_view_pos(-state.zoom, state.rotation);
-    model_object_pos(&mo[0], angle, state.origin.x * 0.01f, state.origin.y * 0.01f, 0.0);
+    model_object_pos(&mo[0], angle, state.origin.x * 0.01f, state.origin.y * 0.01f, 0.f);
     uniform_matrix_4fv("u_model", (const GLfloat *)mo->m);
     uniform_matrix_4fv("u_view", (const GLfloat *)v);
     model_object_draw(&mo[0]);
@@ -159,19 +159,19 @@ void reshape( GLFWwindow* window, int width, int height )
     GLfloat h = (GLfloat) height / (GLfloat) width;
 
     glViewport(0, 0, (GLint) width, (GLint) height);
-    mat4x4_frustum(p, -1.0, 1.0, -h, h, 5.0, 1e9);
+    mat4x4_frustum(p, -1., 1., -h, h, 5.f, 1e9f);
     uniform_matrix_4fv("u_projection", (const GLfloat *)p);
 }
 
 static void scroll(GLFWwindow* window, double xoffset, double yoffset)
 {
-    float quantum = state.zoom / 16.0f;
-    float ratio = 1.0f + (float)quantum / (float)state.zoom;
-    if (yoffset < 0 && state.zoom < max_zoom) {
+    float quantum = state.zoom / 16.f;
+    float ratio = 1.f + (float)quantum / (float)state.zoom;
+    if (yoffset < 0. && state.zoom < max_zoom) {
         state.origin.x *= ratio;
         state.origin.y *= ratio;
         state.zoom += quantum;
-    } else if (yoffset > 0 && state.zoom > min_zoom) {
+    } else if (yoffset > 0. && state.zoom > min_zoom) {
         state.origin.x /= ratio;
         state.origin.y /= ratio;
         state.zoom -= quantum;
@@ -219,18 +219,18 @@ void key( GLFWwindow* window, int k, int s, int action, int mods )
 {
     if( action != GLFW_PRESS ) return;
 
-    float shiftz = (mods & GLFW_MOD_SHIFT ? -1.0 : 1.0);
+    float shiftz = (mods & GLFW_MOD_SHIFT ? -1.f : 1.f);
 
     switch (k) {
     case GLFW_KEY_ESCAPE:
     case GLFW_KEY_Q: glfwSetWindowShouldClose(window, GLFW_TRUE); break;
     case GLFW_KEY_X: animation = !animation; break;
-    case GLFW_KEY_Z: state.rotation.z += 5.0 * shiftz; break;
-    case GLFW_KEY_C: state.zoom += 5.0 * shiftz; break;
-    case GLFW_KEY_W: state.rotation.x += 5.0; break;
-    case GLFW_KEY_S: state.rotation.x -= 5.0; break;
-    case GLFW_KEY_A: state.rotation.y += 5.0; break;
-    case GLFW_KEY_D: state.rotation.y -= 5.0; break;
+    case GLFW_KEY_Z: state.rotation.z += 5.f * shiftz; break;
+    case GLFW_KEY_C: state.zoom += 5.f * shiftz; break;
+    case GLFW_KEY_W: state.rotation.x += 5.f; break;
+    case GLFW_KEY_S: state.rotation.x -= 5.f; break;
+    case GLFW_KEY_A: state.rotation.y += 5.f; break;
+    case GLFW_KEY_D: state.rotation.y -= 5.f; break;
     default: return;
     }
 }
@@ -246,7 +246,7 @@ static void init()
 
     /* create cube vertex and index buffers and buffer objects */
     model_object_init(&mo[0]);
-    model_object_cube(&mo[0], 3.0f, (vec4f){0.3f, 0.3f, 0.3f, 1.f});
+    model_object_cube(&mo[0], 3.f, (vec4f){0.3f, 0.3f, 0.3f, 1.f});
     model_object_freeze(&mo[0]);
 
     if (debug) {
