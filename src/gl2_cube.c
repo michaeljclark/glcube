@@ -16,9 +16,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#define CTX_OPENGL_MAJOR 3
-#define CTX_OPENGL_MINOR 3
-
 #include "linmath.h"
 #include "gl2_util.h"
 
