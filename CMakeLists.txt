@@ -90,7 +90,7 @@ else ()
 endif ()
 
 if (OPENGL_EXAMPLES)
-    foreach(prog IN ITEMS gl2_cube gl3_cube)
+    foreach(prog IN ITEMS gl2_cube gl3_cube gl4_cube)
         message("-- Adding: ${prog}")
         add_executable(${prog} src/${prog}.c)
         target_link_libraries(${prog} ${GLFW_LIBS_ALL})
