@@ -42,8 +42,9 @@ static const char* frag_shader_filename = "shaders/cube.fsh";
 static const char* vert_shader_filename = "shaders/cube.vsh";
 
 static GLfloat angle = 0.f;
+static bool help = 0;
+static bool debug = 0;
 static bool animation = 0;
-static bool debug_vertices = 0;
 static GLuint program;
 static mat4x4 v, p;
 static model_object_t mo[1];
@@ -156,26 +157,6 @@ static void animate()
     }
 }
 
-void key( GLFWwindow* window, int k, int s, int action, int mods )
-{
-    if( action != GLFW_PRESS ) return;
-
-    float shiftz = (mods & GLFW_MOD_SHIFT ? -1.0 : 1.0);
-
-    switch (k) {
-    case GLFW_KEY_ESCAPE:
-    case GLFW_KEY_Q: glfwSetWindowShouldClose(window, GLFW_TRUE); break;
-    case GLFW_KEY_X: animation = !animation; break;
-    case GLFW_KEY_Z: state.rotation.z += 5.0 * shiftz; break;
-    case GLFW_KEY_C: state.zoom += 5.0 * shiftz; break;
-    case GLFW_KEY_W: state.rotation.x += 5.0; break;
-    case GLFW_KEY_S: state.rotation.x -= 5.0; break;
-    case GLFW_KEY_A: state.rotation.y += 5.0; break;
-    case GLFW_KEY_D: state.rotation.y -= 5.0; break;
-    default: return;
-    }
-}
-
 void reshape( GLFWwindow* window, int width, int height )
 {
     GLfloat h = (GLfloat) height / (GLfloat) width;
@@ -184,8 +165,6 @@ void reshape( GLFWwindow* window, int width, int height )
     mat4x4_frustum(p, -1.0, 1.0, -h, h, 5.0, 1e9);
     uniform_matrix_4fv("u_projection", (const GLfloat *)p);
 }
-
-/* mouse callbacks */
 
 static void scroll(GLFWwindow* window, double xoffset, double yoffset)
 {
@@ -239,6 +218,26 @@ static void cursor_position(GLFWwindow* window, double xpos, double ypos)
     }
 }
 
+void key( GLFWwindow* window, int k, int s, int action, int mods )
+{
+    if( action != GLFW_PRESS ) return;
+
+    float shiftz = (mods & GLFW_MOD_SHIFT ? -1.0 : 1.0);
+
+    switch (k) {
+    case GLFW_KEY_ESCAPE:
+    case GLFW_KEY_Q: glfwSetWindowShouldClose(window, GLFW_TRUE); break;
+    case GLFW_KEY_X: animation = !animation; break;
+    case GLFW_KEY_Z: state.rotation.z += 5.0 * shiftz; break;
+    case GLFW_KEY_C: state.zoom += 5.0 * shiftz; break;
+    case GLFW_KEY_W: state.rotation.x += 5.0; break;
+    case GLFW_KEY_S: state.rotation.x -= 5.0; break;
+    case GLFW_KEY_A: state.rotation.y += 5.0; break;
+    case GLFW_KEY_D: state.rotation.y -= 5.0; break;
+    default: return;
+    }
+}
+
 static void init()
 {
     GLuint vsh, fsh;
@@ -253,7 +252,7 @@ static void init()
     model_object_cube(&mo[0], 3.0f, (vec4f){0.3f, 0.3f, 0.3f, 1.f});
     model_object_freeze(&mo[0]);
 
-    if (debug_vertices) {
+    if (debug) {
         vertex_buffer_dump(&mo[0].vb);
     }
 
@@ -266,10 +265,51 @@ static void init()
     glEnable(GL_DEPTH_TEST);
 }
 
+static void print_help(int argc, char **argv)
+{
+    fprintf(stderr,
+        "Usage: %s [options]\n"
+        "\n"
+        "Options:\n"
+        "  -d, --debug                        debug geometry\n"
+        "  -h, --help                         command line help\n",
+        argv[0]);
+}
+
+static int match_opt(const char *arg, const char *opt, const char *longopt)
+{
+    return strcmp(arg, opt) == 0 || strcmp(arg, longopt) == 0;
+}
+
+static void parse_options(int argc, char **argv)
+{
+    int i = 1;
+    while (i < argc) {
+        if (match_opt(argv[i], "-d", "--debug")) {
+            debug++;
+            i++;
+        } else if (match_opt(argv[i], "-h", "--help")) {
+            help++;
+            i++;
+        } else {
+            fprintf(stderr, "error: unknown option: %s\n", argv[i]);
+            help++;
+            break;
+        }
+    }
+
+    if (help) {
+        print_help(argc, argv);
+        exit(1);
+    }
+}
+
 int main(int argc, char *argv[])
 {
     GLFWwindow* window;
     int width, height;
+
+    parse_options(argc, argv);
 
     if( !glfwInit() )
     {
