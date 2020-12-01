@@ -47,10 +47,10 @@ typedef struct
 
 typedef struct
 {
-    vec3f p;
-    vec3f n;
-    vec2f t;
-    vec4f c;
+    vec3f pos;
+    vec3f norm;
+    vec2f uv;
+    vec4f col;
 } vertex;
 
 typedef struct
@@ -77,6 +77,7 @@ typedef enum
 
 static GLuint compile_shader(GLenum type, const char *filename);
 static GLuint link_program(GLuint vsh, GLuint fsh);
+static GLuint link_program_ex(GLuint vsh, GLuint fsh, void (*prelink)());
 static void vertex_buffer_create(GLuint *obj, GLenum target,
     void *data, size_t size);
 static void vertex_array_pointer(const char *attr, GLint size,
@@ -158,14 +159,14 @@ static void vertex_buffer_dump(vertex_buffer *vb)
     for (size_t i = 0; i < count; i++) {
         vertex *v = vb->data + i;
         printf("  [%7zu] = { "
-            ".p = {%5.1f,%5.1f,%5.1f}, "
-            ".n = {%5.1f,%5.1f,%5.1f}, "
-            ".t = {%5.1f,%5.1f}, "
-            ".c = {%5.1f,%5.1f,%5.1f,%5.1f} }\n",
-            i, v->p.vec[0], v->p.vec[1], v->p.vec[2],
-            v->n.vec[0], v->n.vec[1], v->n.vec[2],
-            v->t.vec[0], v->t.vec[1],
-            v->c.vec[0], v->c.vec[1], v->c.vec[2], v->c.vec[3]);
+            ".pos = {%5.3f,%5.3f,%5.3f}, "
+            ".norm = {%5.3f,%5.3f,%5.3f}, "
+            ".uv = {%5.3f,%5.3f}, "
+            ".col = {%5.3f,%5.3f,%5.3f,%5.3f} }\n",
+            i, v->pos.vec[0], v->pos.vec[1], v->pos.vec[2],
+            v->norm.vec[0], v->norm.vec[1], v->norm.vec[2],
+            v->uv.vec[0], v->uv.vec[1],
+            v->col.vec[0], v->col.vec[1], v->col.vec[2], v->col.vec[3]);
     }
     printf("}\n");
 }
@@ -331,11 +332,58 @@ static buffer load_file(const char *filename)
     return (buffer){buf, (size_t)statbuf.st_size};
 }
 
+/*
+ * code in this header assumes OpenGL 3.2 and OpenGL ES 3.1 as dependencies
+ * that can be statically linked. given the code support multiple loaders,
+ * OpenGL 4.x functions are resolved here and the scope is currently limited
+ * to linking and loading of shaders themselves, which are runtime linked.
+ */
+
+typedef void (*func_4_1_glShaderBinary)
+(GLsizei, const GLuint *, GLenum, const void *, GLsizei);
+typedef void (*func_4_3_glGetProgramResourceName)
+(GLuint, GLenum, GLuint, GLsizei, GLsizei *, GLchar *);
+typedef void (*func_4_6_glSpecializeShader)
+(GLuint, const GLchar *, GLuint, const GLuint *, const GLuint *);
+
+static func_4_1_glShaderBinary           muglShaderBinary;
+static func_4_3_glGetProgramResourceName muglGetProgramResourceName;
+static func_4_6_glSpecializeShader       muglSpecializeShader;
+
+#if defined (OSMESA_MAJOR_VERSION)
+#define muglGetProcAddress OSMesaGetProcAddress
+#elif defined (GLFW_VERSION_MAJOR)
+#define muglGetProcAddress glfwGetProcAddress
+#elif defined (GLX_VERSION)
+#define muglGetProcAddress glXGetProcAddress
+#elif defined (WGL_VERSION_1_0)
+#define muglGetProcAddress wglGetProcAddress
+#elif defined (EGL_VERSION)
+#define muglGetProcAddress eglGetProcAddress
+#endif
+
+static void muglInit()
+{
+    static int initialized = 0;
+
+    if (initialized) return;
+
+    muglShaderBinary = (func_4_1_glShaderBinary)
+        muglGetProcAddress("glShaderBinary");
+    muglGetProgramResourceName = (func_4_3_glGetProgramResourceName)
+        muglGetProcAddress("glGetProgramResourceName");
+    muglSpecializeShader = (func_4_6_glSpecializeShader)
+        muglGetProcAddress("glSpecializeShader");
+
+    initialized++;
+}
+
 static GLuint compile_shader(GLenum type, const char *filename)
 {
     GLint length, status;
     GLuint shader;
     buffer buf;
+    int is_spirv;
 
     buf = load_file(filename);
     length = buf.length;
@@ -345,8 +393,17 @@ static GLuint compile_shader(GLenum type, const char *filename)
     }
     shader = glCreateShader(type);
 
-    glShaderSource(shader, (GLsizei)1, (const GLchar * const *)&buf.data, &length);
-    glCompileShader(shader);
+    is_spirv = strstr(filename, ".spv") == filename + strlen(filename) - 4;
+    if (is_spirv) {
+        muglInit();
+        muglShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V,
+            (const void *)buf.data, length);
+        muglSpecializeShader(shader, (const GLchar*)"main", 0, NULL, NULL);
+    } else {
+        glShaderSource(shader, (GLsizei)1,
+            (const GLchar * const *)&buf.data, &length);
+        glCompileShader(shader);
+    }
 
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
     if (length > 0) {
@@ -365,24 +422,27 @@ static GLuint compile_shader(GLenum type, const char *filename)
     return shader;
 }
 
-static GLuint link_program(GLuint vsh, GLuint fsh)
+static void reflect_gl2(GLuint program, GLint *numattrs, GLint *numuniforms)
 {
-    GLuint program, n = 1;
-    GLint status, numattrs, numuniforms;
-
-    program = glCreateProgram();
-    glAttachShader(program, vsh);
-    glAttachShader(program, fsh);
-
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (status == GL_FALSE) {
-        printf("failed to link shader program\n");
-        exit(1);
+    glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, numattrs);
+    for (GLint i = 0; i < *numattrs; i++)  {
+        char namebuf[128];
+        muglGetProgramResourceName(program, GL_PROGRAM_INPUT, i, sizeof(namebuf), NULL, namebuf);
+        attr_list_set(&attrs, namebuf, i);
     }
 
-    glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &numattrs);
-    for (GLint i = 0; i < numattrs; i++)  {
+    glGetProgramiv(program, GL_ACTIVE_UNIFORMS, numuniforms);
+    for (GLint i = 0; i < *numuniforms; i++) {
+        char namebuf[128];
+        muglGetProgramResourceName(program, GL_UNIFORM, i, sizeof(namebuf), NULL, namebuf);
+        attr_list_set(&uniforms, namebuf, glGetUniformLocation(program, namebuf));
+    }
+}
+
+static void reflect_gl4(GLuint program, GLint *numattrs, GLint *numuniforms)
+{
+    glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, numattrs);
+    for (GLint i = 0; i < *numattrs; i++)  {
         GLint namelen=-1, size=-1;
         GLenum type = GL_ZERO;
         char namebuf[128];
@@ -392,8 +452,8 @@ static GLuint link_program(GLuint vsh, GLuint fsh)
         attr_list_set(&attrs, namebuf, i);
     }
 
-    glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numuniforms);
-    for (GLint i = 0; i < numuniforms; i++) {
+    glGetProgramiv(program, GL_ACTIVE_UNIFORMS, numuniforms);
+    for (GLint i = 0; i < *numuniforms; i++) {
         GLint namelen=-1, size=-1;
         GLenum type = GL_ZERO;
         char namebuf[128];
@@ -402,7 +462,39 @@ static GLuint link_program(GLuint vsh, GLuint fsh)
         namebuf[namelen] = 0;
         attr_list_set(&uniforms, namebuf, glGetUniformLocation(program, namebuf));
     }
+}
 
+static GLuint link_program(GLuint vsh, GLuint fsh)
+{
+    return link_program_ex(vsh, fsh, NULL);
+}
+
+static GLuint link_program_ex(GLuint vsh, GLuint fsh, void (*prelink)())
+{
+    GLuint program, n = 1;
+    GLint status, numattrs, numuniforms;
+
+    program = glCreateProgram();
+    glAttachShader(program, vsh);
+    glAttachShader(program, fsh);
+
+    if (prelink) prelink();
+
+    glLinkProgram(program);
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (status == GL_FALSE) {
+        printf("failed to link shader program\n");
+        exit(1);
+    }
+
+    muglInit();
+    if (muglGetProgramResourceName) {
+        reflect_gl2(program, &numattrs, &numuniforms);
+    } else {
+        reflect_gl4(program, &numattrs, &numuniforms);
+    }
+
+#if 0
     /*
      * Note: OpenGL by default binds attributes to locations counting
      * from zero upwards. This is problematic with at least the Nvidia
@@ -421,6 +513,18 @@ static GLuint link_program(GLuint vsh, GLuint fsh)
         printf("failed to relink shader program\n");
         exit(1);
     }
+#else
+    /*
+     * Note: support statically linked locations in SPIR-V modules
+     * requires us to accept the locations assigned by the driver,
+     * so after fetching names, instead of explicitly rebinding,
+     * we find the locations assigned by the driver. This is to work
+     * around issues where attempting to re-assign indices fails.
+     */
+    for (size_t i = 0; i < attrs.count; i++) {
+        attrs.arr[i].val = glGetAttribLocation(program, attrs.arr[i].name);
+    }
+#endif
 
     glDeleteShader(vsh);
     glDeleteShader(fsh);

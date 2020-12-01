@@ -62,10 +62,10 @@ static void model_object_freeze(model_object_t *mo)
     glBindVertexArray(mo->vao);
     vertex_buffer_create(&mo->vbo, GL_ARRAY_BUFFER, mo->vb.data, mo->vb.count * sizeof(vertex));
     vertex_buffer_create(&mo->ibo, GL_ELEMENT_ARRAY_BUFFER, mo->ib.data, mo->ib.count * sizeof(uint));
-    vertex_array_pointer("a_pos", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,p));
-    vertex_array_pointer("a_normal", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,n));
-    vertex_array_pointer("a_uv", 2, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,t));
-    vertex_array_pointer("a_color", 4, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,c));
+    vertex_array_pointer("a_pos", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,pos));
+    vertex_array_pointer("a_normal", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,norm));
+    vertex_array_pointer("a_uv", 2, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,uv));
+    vertex_array_pointer("a_color", 4, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,col));
 }
 
 static void model_object_cube(model_object_t *mo, float s, vec4f col)
@@ -92,12 +92,12 @@ static void model_object_cube(model_object_t *mo, float s, vec4f col)
     for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 4; j++) {
             vertex v = t[j];
-            v.p.x = f[i][0][0]*t[j].p.x + f[i][0][1]*t[j].p.y + f[i][0][2]*t[j].p.z;
-            v.p.y = f[i][1][0]*t[j].p.x + f[i][1][1]*t[j].p.y + f[i][1][2]*t[j].p.z;
-            v.p.z = f[i][2][0]*t[j].p.x + f[i][2][1]*t[j].p.y + f[i][2][2]*t[j].p.z;
-            v.n.x = f[i][0][0]*t[j].n.x + f[i][0][1]*t[j].n.y + f[i][0][2]*t[j].n.z;
-            v.n.y = f[i][1][0]*t[j].n.x + f[i][1][1]*t[j].n.y + f[i][1][2]*t[j].n.z;
-            v.n.z = f[i][2][0]*t[j].n.x + f[i][2][1]*t[j].n.y + f[i][2][2]*t[j].n.z;
+            v.pos.x = f[i][0][0]*t[j].pos.x + f[i][0][1]*t[j].pos.y + f[i][0][2]*t[j].pos.z;
+            v.pos.y = f[i][1][0]*t[j].pos.x + f[i][1][1]*t[j].pos.y + f[i][1][2]*t[j].pos.z;
+            v.pos.z = f[i][2][0]*t[j].pos.x + f[i][2][1]*t[j].pos.y + f[i][2][2]*t[j].pos.z;
+            v.norm.x = f[i][0][0]*t[j].norm.x + f[i][0][1]*t[j].norm.y + f[i][0][2]*t[j].norm.z;
+            v.norm.y = f[i][1][0]*t[j].norm.x + f[i][1][1]*t[j].norm.y + f[i][1][2]*t[j].norm.z;
+            v.norm.z = f[i][2][0]*t[j].norm.x + f[i][2][1]*t[j].norm.y + f[i][2][2]*t[j].norm.z;
             vertex_buffer_add(&mo->vb, v);
         }
     }
