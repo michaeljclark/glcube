@@ -1,22 +1,20 @@
 #version 150
 
-#extension GL_ARB_gpu_shader5 : enable
-
-attribute vec3 a_pos;
-attribute vec3 a_normal;
-attribute vec2 a_uv;
-attribute vec4 a_color;
+in vec3 a_pos;
+in vec3 a_normal;
+in vec2 a_uv;
+in vec4 a_color;
 
 uniform mat4 u_projection;
 uniform mat4 u_model;
 uniform mat4 u_view;
 uniform vec3 u_lightpos;
 
-varying vec3 v_normal;
-varying vec2 v_uv;
-varying vec4 v_color;
-varying vec3 v_fragPos;
-varying vec3 v_lightDir;
+out vec3 v_normal;
+out vec2 v_uv;
+out vec4 v_color;
+out vec3 v_fragPos;
+out vec3 v_lightDir;
 
 #define LINEAR_Z 1
 //#define LOGARITHMIC_Z 1

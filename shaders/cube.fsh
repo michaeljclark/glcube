@@ -1,10 +1,12 @@
 #version 150
 
-varying vec3 v_normal;
-varying vec2 v_uv;
-varying vec4 v_color;
-varying vec3 v_fragPos;
-varying vec3 v_lightDir;
+in vec3 v_normal;
+in vec2 v_uv;
+in vec4 v_color;
+in vec3 v_fragPos;
+in vec3 v_lightDir;
+
+out vec4 outFragColor;
 
 uint ror(uint x, int d) { return (x >> d) | (x << (32-d)); }
 uint sigma0(uint h1) { return ror(h1, 2) ^ ror(h1, 13) ^ ror(h1, 22); }
@@ -52,9 +54,7 @@ void main()
 {
   float ambient = 0.1;
   float diff = max(dot(v_normal, v_lightDir), 0.0);
- 
   float r = random(v_uv) * 0.1;
   vec4 finalColor = (ambient + diff + r) * v_color;
-
-  gl_FragColor = vec4(finalColor.rgb, v_color.a);
+  outFragColor = vec4(finalColor.rgb, v_color.a);
 }
