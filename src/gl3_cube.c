@@ -20,6 +20,7 @@
 #include "gl2_util.h"
 
 typedef struct model_object {
+    GLuint vao;
     GLuint vbo;
     GLuint ibo;
     vertex_buffer vb;
@@ -57,8 +58,14 @@ static void model_object_init(model_object_t *mo)
 
 static void model_object_freeze(model_object_t *mo)
 {
+    glGenVertexArrays(1, &mo->vao);
+    glBindVertexArray(mo->vao);
     vertex_buffer_create(&mo->vbo, GL_ARRAY_BUFFER, mo->vb.data, mo->vb.count * sizeof(vertex));
     vertex_buffer_create(&mo->ibo, GL_ELEMENT_ARRAY_BUFFER, mo->ib.data, mo->ib.count * sizeof(uint));
+    vertex_array_pointer("a_pos", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,pos));
+    vertex_array_pointer("a_normal", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,norm));
+    vertex_array_pointer("a_uv", 2, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,uv));
+    vertex_array_pointer("a_color", 4, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,col));
 }
 
 static void model_object_cube(model_object_t *mo, float s, vec4f col)
@@ -115,12 +122,10 @@ static void model_object_pos(model_object_t *mo,float angle,
 
 static void model_object_draw(model_object_t *mo)
 {
+    glBindVertexArray(mo->vao);
     glBindBuffer(GL_ARRAY_BUFFER, mo->vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mo->ibo);
-    vertex_array_pointer("a_pos", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,pos));
-    vertex_array_pointer("a_normal", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,norm));
-    vertex_array_pointer("a_uv", 2, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,uv));
-    vertex_array_pointer("a_color", 4, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,col));
+    glBindVertexArray(mo->vao);
     glDrawElements(GL_TRIANGLES, (GLsizei)mo->ib.count, GL_UNSIGNED_INT, (void*)0);
 }
 
