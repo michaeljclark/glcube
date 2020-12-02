@@ -232,12 +232,12 @@ void key( GLFWwindow* window, int k, int s, int action, int mods )
 
 static void init()
 {
-    GLuint vsh, fsh;
+    GLuint shaders[2];
 
     /* shader program */
-    vsh = compile_shader(GL_VERTEX_SHADER, vert_shader_filename);
-    fsh = compile_shader(GL_FRAGMENT_SHADER, frag_shader_filename);
-    program = link_program(vsh, fsh);
+    shaders[0] = compile_shader(GL_VERTEX_SHADER, vert_shader_filename);
+    shaders[1] = compile_shader(GL_FRAGMENT_SHADER, frag_shader_filename);
+    program = link_program(shaders, 2, NULL);
 
     /* create cube vertex and index buffers and buffer objects */
     model_object_init(&mo[0]);

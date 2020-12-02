@@ -250,21 +250,22 @@ void key( GLFWwindow* window, int k, int s, int action, int mods )
     }
 }
 
-static void prelink(void)
+static GLuint bind(GLuint program)
 {
-    GLuint blockIndex = glGetUniformBlockIndex(program, "UBO.ubo");
+    GLuint blockIndex = glGetUniformBlockIndex(program, "UBO");
     glUniformBlockBinding(program, blockIndex, 0);
     glBindFragDataLocation(program, 0, "outFragColor");
+    return GL_TRUE;
 }
 
 static void init()
 {
-    GLuint vsh, fsh;
+    GLuint shaders[2];
 
     /* shader program */
-    vsh = compile_shader(GL_VERTEX_SHADER, vert_shader_filename);
-    fsh = compile_shader(GL_FRAGMENT_SHADER, frag_shader_filename);
-    program = link_program_ex(vsh, fsh, prelink);
+    shaders[0] = compile_shader(GL_VERTEX_SHADER, vert_shader_filename);
+    shaders[1] = compile_shader(GL_FRAGMENT_SHADER, frag_shader_filename);
+    program = link_program(shaders, 2, bind);
 
     /* create cube vertex and index buffers and buffer objects */
     model_object_init(&mo[0]);
