@@ -314,6 +314,7 @@ int main(int argc, char *argv[])
         exit( EXIT_FAILURE );
     }
 
+    glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_DEPTH_BITS, 16);
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 
