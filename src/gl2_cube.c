@@ -77,14 +77,27 @@ static void model_object_cube(model_object_t *mo, float s, vec4f col)
     const vertex t[4] = {
         { { -s,  s,  s }, { 0, 0, 1 }, { 0, 1 }, { r, g, b, a } },
         { { -s, -s,  s }, { 0, 0, 1 }, { 0, 0 }, { r, g, b, a } },
-        { {  s,  s,  s }, { 0, 0, 1 }, { 1, 1 }, { r, g, b, a } },
         { {  s, -s,  s }, { 0, 0, 1 }, { 1, 0 }, { r, g, b, a } },
+        { {  s,  s,  s }, { 0, 0, 1 }, { 1, 1 }, { r, g, b, a } },
+    };
+
+    const float colors[6][4] = {
+        { 1.0f, 0.0f, 0.0f, 1 }, /* red */
+        { 0.0f, 1.0f, 0.0f, 1 }, /* green */
+        { 0.0f, 0.0f, 1.0f, 1 }, /* blue */
+        { 0.0f, 0.7f, 0.7f, 1 }, /* cyan */
+        { 0.7f, 0.0f, 0.7f, 1 }, /* magenta */
+        { 0.7f, 0.7f, 0.0f, 1 }, /* yellow */
     };
 
     uint idx = vertex_buffer_count(&mo->vb);
     for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 4; j++) {
             vertex v = t[j];
+            v.col.r = colors[i][0];
+            v.col.g = colors[i][1];
+            v.col.b = colors[i][2];
+            v.col.a = colors[i][3];
             v.pos.x = f[i][0][0]*t[j].pos.x + f[i][0][1]*t[j].pos.y + f[i][0][2]*t[j].pos.z;
             v.pos.y = f[i][1][0]*t[j].pos.x + f[i][1][1]*t[j].pos.y + f[i][1][2]*t[j].pos.z;
             v.pos.z = f[i][2][0]*t[j].pos.x + f[i][2][1]*t[j].pos.y + f[i][2][2]*t[j].pos.z;
@@ -94,7 +107,7 @@ static void model_object_cube(model_object_t *mo, float s, vec4f col)
             vertex_buffer_add(&mo->vb, v);
         }
     }
-    index_buffer_add_primitves(&mo->ib, primitive_topology_quad_strip, 12, idx);
+    index_buffer_add_primitves(&mo->ib, primitive_topology_quads, 6, idx);
 }
 
 static void model_view_pos(float zoom, vec3f rot)
