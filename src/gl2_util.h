@@ -55,17 +55,14 @@ typedef struct
 
 typedef struct
 {
-    size_t total;
+    size_t stride;
+    size_t capacity;
     size_t count;
-    vertex *data;
-} vertex_buffer;
+    char *data;
+} array_buffer;
 
-typedef struct
-{
-    size_t total;
-    size_t count;
-    uint *data;
-} index_buffer;
+typedef array_buffer vertex_buffer;
+typedef array_buffer index_buffer;
 
 typedef enum
 {
@@ -87,13 +84,20 @@ static void uniform_1i(const char *uniform, GLint i);
 static void uniform_3f(const char *uniform, GLfloat v1, GLfloat v2, GLfloat v3);
 static void uniform_matrix_4fv(const char *uniform, const GLfloat *mat);
 
+static void array_buffer_init(array_buffer *sb,
+    size_t stride, size_t capacity);
+static void array_buffer_destroy(array_buffer *sb);
+static void* array_buffer_data(array_buffer *sb);
+static size_t array_buffer_size(array_buffer *sb);
+static uint array_buffer_count(array_buffer *sb);
+static uint array_buffer_add(array_buffer *sb, void *data);
+
 static void vertex_buffer_init(vertex_buffer *vb);
 static void vertex_buffer_destroy(vertex_buffer *vb);
 static void* vertex_buffer_data(vertex_buffer *vb);
 static size_t vertex_buffer_size(vertex_buffer *vb);
 static uint vertex_buffer_count(vertex_buffer *vb);
-static uint vertex_buffer_add(vertex_buffer *vb,
-    vertex vertex);
+static uint vertex_buffer_add(vertex_buffer *vb, vertex vertex);
 
 static void index_buffer_init(index_buffer *ib);
 static void index_buffer_destroy(index_buffer *ib);
@@ -106,50 +110,81 @@ static void index_buffer_add_primitves(index_buffer *ib,
     primitive_type type, uint count, uint addend);
 
 /*
- * vertex and index buffer implementation
+ * vertex, index and storage buffer implementation
  */
 
 enum { VERTEX_BUFFER_INITIAL_COUNT = 16 };
+enum { INDEX_BUFFER_INITIAL_COUNT = 64 };
+enum { STORAGE_BUFFER_INITIAL_COUNT = 16 };
+
+static void array_buffer_init(array_buffer *sb, size_t stride, size_t capacity)
+{
+    sb->stride = stride;
+    sb->capacity = capacity;
+    sb->count = 0;
+    sb->data = (char*)malloc(sb->stride * sb->capacity);
+}
+
+static void array_buffer_destroy(array_buffer *sb)
+{
+    free(sb->data);
+    sb->data = NULL;
+}
+
+static uint array_buffer_count(array_buffer *sb)
+{
+    return sb->count;
+}
+
+static void* array_buffer_data(array_buffer *sb)
+{
+    return sb->data;
+}
+
+static size_t array_buffer_size(array_buffer *sb)
+{
+    return sb->count * sb->stride;
+}
+
+static uint array_buffer_add(array_buffer *sb, void *data)
+{
+    if (sb->count >= sb->capacity) {
+        sb->capacity <<= 1;
+        sb->data = (char*)realloc(sb->data, sb->stride * sb->capacity);
+    }
+    uint idx = sb->count++;
+    memcpy(sb->data + (idx * sb->stride), data, sb->stride);
+    return idx;
+}
 
 static void vertex_buffer_init(vertex_buffer *vb)
 {
-    vb->total = VERTEX_BUFFER_INITIAL_COUNT;
-    vb->count = 0;
-    vb->data = (vertex*)malloc(sizeof(vertex) * vb->total);
+    array_buffer_init(vb, sizeof(vertex), VERTEX_BUFFER_INITIAL_COUNT);
 }
 
 static void vertex_buffer_destroy(vertex_buffer *vb)
 {
-    free(vb->data);
-    vb->data = NULL;
+    array_buffer_destroy(vb);
 }
 
 static uint vertex_buffer_count(vertex_buffer *vb)
 {
-    return vb->count;
+    return array_buffer_count(vb);
 }
 
 static void* vertex_buffer_data(vertex_buffer *vb)
 {
-    return vb->data;
+    return array_buffer_data(vb);
 }
 
 static size_t vertex_buffer_size(vertex_buffer *vb)
 {
-    return vb->count * sizeof(vertex);
+    return array_buffer_size(vb);
 }
 
-static uint vertex_buffer_add(vertex_buffer *vb,
-    vertex v)
+static uint vertex_buffer_add(vertex_buffer *vb, vertex v)
 {
-    if (vb->count >= vb->total) {
-        vb->total <<= 1;
-        vb->data = (vertex*)realloc(vb->data,
-            sizeof(vertex) * vb->total);
-    }
-    uint idx = vb->count++;
-    vb->data[idx] = v;
-    return idx;
+    return array_buffer_add(vb, &v);
 }
 
 static void vertex_buffer_dump(vertex_buffer *vb)
@@ -157,7 +192,7 @@ static void vertex_buffer_dump(vertex_buffer *vb)
     size_t count = vb->count;
     printf("vertex_buffer_%p = {\n", vb);
     for (size_t i = 0; i < count; i++) {
-        vertex *v = vb->data + i;
+        vertex *v = ((vertex*)vb->data) + i;
         printf("  [%7zu] = { "
             ".pos = {%5.3f,%5.3f,%5.3f}, "
             ".norm = {%5.3f,%5.3f,%5.3f}, "
@@ -171,47 +206,41 @@ static void vertex_buffer_dump(vertex_buffer *vb)
     printf("}\n");
 }
 
-enum { INDEX_BUFFER_INITIAL_COUNT = 64 };
-
 static void index_buffer_init(index_buffer *ib)
 {
-    ib->total = INDEX_BUFFER_INITIAL_COUNT;
-    ib->count = 0;
-    ib->data = (uint*)malloc(sizeof(uint) * ib->total);
+    return array_buffer_init(ib, sizeof(uint), INDEX_BUFFER_INITIAL_COUNT);
 }
 
 static void index_buffer_destroy(index_buffer *ib)
 {
-    free(ib->data);
-    ib->data = NULL;
+    return array_buffer_destroy(ib);
 }
 
 static uint index_buffer_count(index_buffer *ib)
 {
-    return ib->count;
+    return array_buffer_count(ib);
 }
 
 static void* index_buffer_data(index_buffer *ib)
 {
-    return ib->data;
+    return array_buffer_data(ib);
 }
 
 static size_t index_buffer_size(index_buffer *ib)
 {
-    return ib->count * sizeof(uint);
+    return array_buffer_size(ib);
 }
 
 static void index_buffer_add(index_buffer *ib,
     const uint *data, uint count, uint addend)
 {
-    if (ib->count + count >= ib->total) {
-        do { ib->total <<= 1; }
-        while (ib->count + count > ib->total);
-        ib->data = (uint*)realloc(ib->data,
-            sizeof(uint) * ib->total);
+    if (ib->count + count >= ib->capacity) {
+        do { ib->capacity <<= 1; }
+        while (ib->count + count > ib->capacity);
+        ib->data = realloc(ib->data, sizeof(uint) * ib->capacity);
     }
     for (uint i = 0; i < count; i++) {
-        ib->data[ib->count++] = data[i] + addend;
+        ((uint*)ib->data)[ib->count++] = data[i] + addend;
     }
 }
 
@@ -259,7 +288,7 @@ static void index_buffer_dump(index_buffer *ib)
     size_t i;
     for (i = 0; i < count; i++) {
         if (i % width == 0) printf("  [%7zu] = ", i);
-        printf("%7u", ib->data[i]);
+        printf("%7u", ((uint*)ib->data)[i]);
         if (i % width == width-1) printf("\n");
     }
     if (i % width != 0) printf("\n");
@@ -313,7 +342,7 @@ static buffer load_file(const char *filename)
     char *buf;
     size_t nread;
 
-    if ((f = fopen(filename, "rb")) == NULL) {
+    if ((f = fopen(filename, "r")) == NULL) {
         printf("gears_create_shader_from_file: open: %s: %s",
             filename, strerror(errno));
         exit(1);
@@ -467,7 +496,7 @@ static void reflect_gl4(GLuint program, GLint *numattrs, GLint *numuniforms)
 static GLuint link_program(const GLuint *shaders, GLuint numshaders,
     GLuint (*bindfn)(GLuint prog))
 {
-    GLuint program;
+    GLuint program, n = 1, relink;
     GLint status, numattrs, numuniforms;
 
     program = glCreateProgram();
