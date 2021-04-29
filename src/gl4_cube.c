@@ -19,12 +19,12 @@
 #include "linmath.h"
 #include "gl2_util.h"
 
-typedef struct UBO_t {
+typedef struct mvp_t {
     mat4x4 projection;
     mat4x4 model;
     mat4x4 view;
     vec4 lightpos;
-} UBO_t;
+} mvp_t;
 
 typedef struct model_object {
     GLuint vao;
@@ -34,6 +34,7 @@ typedef struct model_object {
     vertex_buffer vb;
     index_buffer ib;
     mat4x4 m;
+    mvp_t mvp;
 } model_object_t;
 
 typedef struct zoom_state {
@@ -53,7 +54,6 @@ static bool animation = 0;
 static GLuint program;
 static mat4x4 v, p;
 static model_object_t mo[1];
-static UBO_t UBO[3];
 static zoom_state_t state = { 32.0f, { 0.f }, { 0.f }, { 20.f, 30.f, 0.f } }, state_save;
 static const float min_zoom = 16.0f, max_zoom = 32768.0f;
 static bool mouse_left_drag = false;
@@ -159,11 +159,11 @@ static void draw()
     model_view_pos(-state.zoom, state.rotation);
     model_object_pos(&mo[0], angle, state.origin.x * 0.01f, state.origin.y * 0.01f, 0.f);
 
-    memcpy(UBO[0].model, mo->m, sizeof(mo->m));
-    memcpy(UBO[0].view, v, sizeof(v));
+    memcpy(mo[0].mvp.model, mo->m, sizeof(mo->m));
+    memcpy(mo[0].mvp.view, v, sizeof(v));
 
     glBindBuffer(GL_UNIFORM_BUFFER, mo->ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(UBO[0]), &UBO[0]);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(mo[0].mvp), &mo[0].mvp);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     model_object_draw(&mo[0]);
@@ -188,7 +188,7 @@ void reshape( GLFWwindow* window, int width, int height )
 
     glViewport(0, 0, (GLint) width, (GLint) height);
     mat4x4_frustum(p, -1., 1., -h, h, 5.f, 1e9f);
-    memcpy(UBO[0].projection, p, sizeof(p));
+    memcpy(mo[0].mvp.projection, p, sizeof(p));
 }
 
 static void scroll(GLFWwindow* window, double xoffset, double yoffset)
@@ -292,13 +292,13 @@ static void init()
     /* create uniform buffer object */
     glGenBuffers(1, &mo[0].ubo);
     glBindBuffer(GL_UNIFORM_BUFFER, mo[0].ubo);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(UBO[0]), NULL, GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(mo[0].mvp), NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     /* set light position uniform */
     glUseProgram(program);
     vec4 lightpos = { 5.f, 5.f, 10.f, 0.f };
-    memcpy(UBO[0].lightpos, lightpos, sizeof(lightpos));
+    memcpy(mo[0].mvp.lightpos, lightpos, sizeof(lightpos));
 
     /* enable OpenGL capabilities */
     glEnable(GL_CULL_FACE);
