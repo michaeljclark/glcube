@@ -57,8 +57,8 @@ static void model_object_init(model_object_t *mo)
 
 static void model_object_freeze(model_object_t *mo)
 {
-    vertex_buffer_create(&mo->vbo, GL_ARRAY_BUFFER, mo->vb.data, mo->vb.count * sizeof(vertex));
-    vertex_buffer_create(&mo->ibo, GL_ELEMENT_ARRAY_BUFFER, mo->ib.data, mo->ib.count * sizeof(uint));
+    buffer_object_create(&mo->vbo, GL_ARRAY_BUFFER, &mo->vb);
+    buffer_object_create(&mo->ibo, GL_ELEMENT_ARRAY_BUFFER, &mo->ib);
 }
 
 static void model_object_cube(model_object_t *mo, float s, vec4f col)

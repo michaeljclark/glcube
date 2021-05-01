@@ -89,6 +89,7 @@ static void array_buffer_init(array_buffer *sb,
 static void array_buffer_destroy(array_buffer *sb);
 static void* array_buffer_data(array_buffer *sb);
 static size_t array_buffer_size(array_buffer *sb);
+static size_t array_buffer_stride(array_buffer *sb);
 static uint array_buffer_count(array_buffer *sb);
 static uint array_buffer_add(array_buffer *sb, void *data);
 
@@ -110,12 +111,11 @@ static void index_buffer_add_primitves(index_buffer *ib,
     primitive_type type, uint count, uint addend);
 
 /*
- * vertex, index and storage buffer implementation
+ * vertex, index and generic array buffer implementation
  */
 
 enum { VERTEX_BUFFER_INITIAL_COUNT = 16 };
 enum { INDEX_BUFFER_INITIAL_COUNT = 64 };
-enum { STORAGE_BUFFER_INITIAL_COUNT = 16 };
 
 static void array_buffer_init(array_buffer *sb, size_t stride, size_t capacity)
 {
@@ -139,6 +139,11 @@ static uint array_buffer_count(array_buffer *sb)
 static void* array_buffer_data(array_buffer *sb)
 {
     return sb->data;
+}
+
+static size_t array_buffer_stride(array_buffer *sb)
+{
+    return sb->stride;
 }
 
 static size_t array_buffer_size(array_buffer *sb)
@@ -567,13 +572,20 @@ static GLuint link_program(const GLuint *shaders, GLuint numshaders,
     return program;
 }
 
-static void vertex_buffer_create(GLuint *obj, GLenum target,
-    void *data, size_t size)
+static void buffer_object_create_offset(GLuint *obj, GLenum target,
+    array_buffer *ab, size_t offset, size_t count)
 {
+    size_t size = array_buffer_stride(ab) * count;
+    char *data = (char*)array_buffer_data(ab) + array_buffer_stride(ab) * offset;
     glGenBuffers(1, obj);
     glBindBuffer(target, *obj);
-    glBufferData(target, size, data, GL_STATIC_DRAW);
+    glBufferData(target, size, (void*)data, GL_STATIC_DRAW);
     glBindBuffer(target, *obj);
+}
+
+static void buffer_object_create(GLuint *obj, GLenum target, array_buffer *ab)
+{
+    return buffer_object_create_offset(obj, target, ab, 0, array_buffer_count(ab));
 }
 
 static void vertex_array_pointer(const char *attr, GLint size,

@@ -60,8 +60,8 @@ static void model_object_freeze(model_object_t *mo)
 {
     glGenVertexArrays(1, &mo->vao);
     glBindVertexArray(mo->vao);
-    vertex_buffer_create(&mo->vbo, GL_ARRAY_BUFFER, mo->vb.data, mo->vb.count * sizeof(vertex));
-    vertex_buffer_create(&mo->ibo, GL_ELEMENT_ARRAY_BUFFER, mo->ib.data, mo->ib.count * sizeof(uint));
+    buffer_object_create(&mo->vbo, GL_ARRAY_BUFFER, &mo->vb);
+    buffer_object_create(&mo->ibo, GL_ELEMENT_ARRAY_BUFFER, &mo->ib);
     vertex_array_pointer("a_pos", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,pos));
     vertex_array_pointer("a_normal", 3, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,norm));
     vertex_array_pointer("a_uv", 2, GL_FLOAT, 0, sizeof(vertex), offsetof(vertex,uv));
