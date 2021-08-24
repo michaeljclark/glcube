@@ -69,9 +69,9 @@ static void model_object_cube(model_object_t *mo, float s, vec4f col)
         /* front */  { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 }, },
         /* right */  { { 0, 0, 1 }, { 1, 0, 0 }, { 0, 1, 0 }, },
         /* top */    { { 0, 1, 0 }, { 0, 0, 1 }, { 1, 0, 0 }, },
+        /* rear */   { { 0, 1, 0 }, { 1, 0, 0 }, { 0, 0,-1 }, },
         /* left */   { { 0, 0,-1 }, { 0, 1, 0 }, { 1, 0, 0 }, },
         /* bottom */ { { 1, 0, 0 }, { 0, 0,-1 }, { 0, 1, 0 }, },
-        /* back */   { { 0, 1, 0 }, { 1, 0, 0 }, { 0, 0,-1 }, }
     };
 
     const vertex t[4] = {
@@ -93,17 +93,19 @@ static void model_object_cube(model_object_t *mo, float s, vec4f col)
     uint idx = vertex_buffer_count(&mo->vb);
     for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 4; j++) {
-            vertex v = t[j];
-            v.col.r = colors[i][0];
-            v.col.g = colors[i][1];
-            v.col.b = colors[i][2];
-            v.col.a = colors[i][3];
+            vertex v;
             v.pos.x = f[i][0][0]*t[j].pos.x + f[i][0][1]*t[j].pos.y + f[i][0][2]*t[j].pos.z;
             v.pos.y = f[i][1][0]*t[j].pos.x + f[i][1][1]*t[j].pos.y + f[i][1][2]*t[j].pos.z;
             v.pos.z = f[i][2][0]*t[j].pos.x + f[i][2][1]*t[j].pos.y + f[i][2][2]*t[j].pos.z;
             v.norm.x = f[i][0][0]*t[j].norm.x + f[i][0][1]*t[j].norm.y + f[i][0][2]*t[j].norm.z;
             v.norm.y = f[i][1][0]*t[j].norm.x + f[i][1][1]*t[j].norm.y + f[i][1][2]*t[j].norm.z;
             v.norm.z = f[i][2][0]*t[j].norm.x + f[i][2][1]*t[j].norm.y + f[i][2][2]*t[j].norm.z;
+            v.uv.x = t[j].uv.x;
+            v.uv.y = t[j].uv.y;
+            v.col.r = colors[i][0];
+            v.col.g = colors[i][1];
+            v.col.b = colors[i][2];
+            v.col.a = colors[i][3];
             vertex_buffer_add(&mo->vb, v);
         }
     }
