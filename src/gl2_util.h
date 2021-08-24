@@ -22,9 +22,21 @@
 
 typedef unsigned uint;
 
+typedef union { int vec[2]; struct { int x, y;       }; struct { int r, g;       }; } vec2i;
+typedef union { int vec[3]; struct { int x, y, z;    }; struct { int r, g, b;    }; } vec3i;
+typedef union { int vec[4]; struct { int x, y, z, w; }; struct { int r, g, b, a; }; } vec4i;
+
+typedef union { uint vec[2]; struct { uint x, y;       }; struct { uint r, g;       }; } vec2ui;
+typedef union { uint vec[3]; struct { uint x, y, z;    }; struct { uint r, g, b;    }; } vec3ui;
+typedef union { uint vec[4]; struct { uint x, y, z, w; }; struct { uint r, g, b, a; }; } vec4ui;
+
 typedef union { float vec[2]; struct { float x, y;       }; struct { float r, g;       }; } vec2f;
 typedef union { float vec[3]; struct { float x, y, z;    }; struct { float r, g, b;    }; } vec3f;
 typedef union { float vec[4]; struct { float x, y, z, w; }; struct { float r, g, b, a; }; } vec4f;
+
+typedef union { double vec[2]; struct { double x, y;       }; struct { double r, g;       }; } vec2d;
+typedef union { double vec[3]; struct { double x, y, z;    }; struct { double r, g, b;    }; } vec3d;
+typedef union { double vec[4]; struct { double x, y, z, w; }; struct { double r, g, b, a; }; } vec4d;
 
 typedef struct
 {
