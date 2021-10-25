@@ -33,15 +33,15 @@ typedef struct model_object {
     GLuint ubo;
     vertex_buffer vb;
     index_buffer ib;
-    mat4x4 m;
+    mat4x4 m, v;
     mvp_t mvp;
 } model_object_t;
 
 typedef struct zoom_state {
     float zoom;
-    vec2f mouse_pos;
-    vec2f origin;
-    vec3f rotation;
+    vec2 mouse_pos;
+    vec2 origin;
+    vec3 rotation;
 } zoom_state_t;
 
 static const char* frag_shader_filename = "shaders/cube.frag";
@@ -128,20 +128,26 @@ static void model_object_cube(model_object_t *mo, float s, vec4f col)
     index_buffer_add_primitves(&mo->ib, primitive_topology_quads, 6, idx);
 }
 
-static void model_view_pos(float zoom, vec3f rot)
+static float degrees_to_radians(float a) { return a * M_PI / 180.0f; }
+
+static void model_matrix_transform(mat4x4 m, vec3 scale, vec3 trans, vec3 rot)
 {
-    mat4x4_translate(v, 0.f, 0.f, zoom);
-    mat4x4_rotate(v, v, 1.f, 0.f, 0.f, (rot.x / 180.f) * M_PI);
-    mat4x4_rotate(v, v, 0.f, 1.f, 0.f, (rot.y / 180.f) * M_PI);
-    mat4x4_rotate(v, v, 0.f, 0.f, 1.f, (rot.z / 180.f) * M_PI);
+    mat4x4_identity(m);
+    mat4x4_scale_aniso(m, m, scale[0], scale[1], scale[2]);
+    mat4x4_translate_in_place(m, trans[0], trans[1], trans[2]);
+    mat4x4_rotate_X(m, m, degrees_to_radians(rot[0]));
+    mat4x4_rotate_Y(m, m, degrees_to_radians(rot[1]));
+    mat4x4_rotate_Z(m, m, degrees_to_radians(rot[2]));
 }
 
-static void model_object_pos(model_object_t *mo,float angle,
-    float posx, float posy, float posz)
+static void model_update_matrices(model_object_t *mo)
 {
-    mat4x4 m;
-    mat4x4_translate(m, posx, posy, posz);
-    mat4x4_rotate_Y(mo->m, m, (angle / 180) * M_PI);
+    memcpy(mo[0].mvp.model, mo[0].m, sizeof(mo[0].m));
+    memcpy(mo[0].mvp.view, mo[0].v, sizeof(mo[0].v));
+
+    glBindBuffer(GL_UNIFORM_BUFFER, mo->ubo);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(mo[0].mvp), &mo[0].mvp);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 static void model_object_draw(model_object_t *mo)
@@ -158,16 +164,15 @@ static void draw()
     glClearColor(1.f, 1.f, 1.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    model_view_pos(-state.zoom, state.rotation);
-    model_object_pos(&mo[0], angle, state.origin.x * 0.01f, state.origin.y * 0.01f, 0.f);
+    vec3 model_scale = { 1.0f, 1.0f, 1.0f };
+    vec3 model_trans = { 0.0f, 0.0f, 0.0f };
+    vec3 model_rot = { 0.0f, angle, 0.0f };
+    vec3 view_scale = { 1.0f, 1.0f, 1.0f };
+    vec3 view_trans = { state.origin[0] * 0.01f, state.origin[1] * 0.01f, -state.zoom };
 
-    memcpy(mo[0].mvp.model, mo->m, sizeof(mo->m));
-    memcpy(mo[0].mvp.view, v, sizeof(v));
-
-    glBindBuffer(GL_UNIFORM_BUFFER, mo->ubo);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(mo[0].mvp), &mo[0].mvp);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
+    model_matrix_transform(mo[0].m, model_scale, model_trans, model_rot);
+    model_matrix_transform(mo[0].v, view_scale, view_trans, state.rotation);
+    model_update_matrices(&mo[0]);
     model_object_draw(&mo[0]);
 }
 
@@ -198,12 +203,12 @@ static void scroll(GLFWwindow* window, double xoffset, double yoffset)
     float quantum = state.zoom / 16.f;
     float ratio = 1.f + (float)quantum / (float)state.zoom;
     if (yoffset < 0. && state.zoom < max_zoom) {
-        state.origin.x *= ratio;
-        state.origin.y *= ratio;
+        state.origin[0] *= ratio;
+        state.origin[1] *= ratio;
         state.zoom += quantum;
     } else if (yoffset > 0. && state.zoom > min_zoom) {
-        state.origin.x /= ratio;
-        state.origin.y /= ratio;
+        state.origin[0] /= ratio;
+        state.origin[1] /= ratio;
         state.zoom -= quantum;
     }
 }
@@ -224,23 +229,23 @@ static void mouse_button(GLFWwindow* window, int button, int action, int mods)
 
 static void cursor_position(GLFWwindow* window, double xpos, double ypos)
 {
-    state.mouse_pos.x = xpos;
-    state.mouse_pos.y = ypos;
+    state.mouse_pos[0] = xpos;
+    state.mouse_pos[1] = ypos;
 
     if (mouse_left_drag) {
-        state.origin.x += state.mouse_pos.x - state_save.mouse_pos.x;
-        state.origin.y += state.mouse_pos.y - state_save.mouse_pos.y;
-        state_save.mouse_pos.x = state.mouse_pos.x;
-        state_save.mouse_pos.y = state.mouse_pos.y;
+        state.origin[0] += state.mouse_pos[0] - state_save.mouse_pos[0];
+        state.origin[1] += state.mouse_pos[1] - state_save.mouse_pos[1];
+        state_save.mouse_pos[0] = state.mouse_pos[0];
+        state_save.mouse_pos[1] = state.mouse_pos[1];
     }
     if (mouse_right_drag) {
-        float delta0 = state.mouse_pos.x - state_save.mouse_pos.x;
-        float delta1 = state.mouse_pos.y - state_save.mouse_pos.y;
+        float delta0 = state.mouse_pos[0] - state_save.mouse_pos[0];
+        float delta1 = state.mouse_pos[1] - state_save.mouse_pos[1];
         float zoom = state_save.zoom * powf(65.0f/64.0f,(float)-delta1);
         if (zoom != state.zoom && zoom > min_zoom && zoom < max_zoom) {
             state.zoom = zoom;
-            state.origin.x = (state.origin.x * (zoom / state.zoom));
-            state.origin.y = (state.origin.y * (zoom / state.zoom));
+            state.origin[0] = (state.origin[0] * (zoom / state.zoom));
+            state.origin[1] = (state.origin[1] * (zoom / state.zoom));
         }
     }
 }
@@ -255,12 +260,12 @@ void key( GLFWwindow* window, int k, int s, int action, int mods )
     case GLFW_KEY_ESCAPE:
     case GLFW_KEY_Q: glfwSetWindowShouldClose(window, GLFW_TRUE); break;
     case GLFW_KEY_X: animation = !animation; break;
-    case GLFW_KEY_Z: state.rotation.z += 5.f * shiftz; break;
+    case GLFW_KEY_Z: state.rotation[2] += 5.f * shiftz; break;
     case GLFW_KEY_C: state.zoom += 5.f * shiftz; break;
-    case GLFW_KEY_W: state.rotation.x += 5.f; break;
-    case GLFW_KEY_S: state.rotation.x -= 5.f; break;
-    case GLFW_KEY_A: state.rotation.y += 5.f; break;
-    case GLFW_KEY_D: state.rotation.y -= 5.f; break;
+    case GLFW_KEY_W: state.rotation[0] += 5.f; break;
+    case GLFW_KEY_S: state.rotation[0] -= 5.f; break;
+    case GLFW_KEY_A: state.rotation[1] += 5.f; break;
+    case GLFW_KEY_D: state.rotation[1] -= 5.f; break;
     default: return;
     }
 }
