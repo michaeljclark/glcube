@@ -13,7 +13,13 @@
 #include <math.h>
 #include <stdbool.h>
 
+#ifdef HAVE_GLAD
 #include <glad/glad.h>
+#else
+#define GL_GLEXT_PROTOTYPES
+#include <GL/gl.h>
+#include <GL/glext.h>
+#endif
 #include <GLFW/glfw3.h>
 
 #include "linmath.h"
@@ -377,7 +383,9 @@ int main(int argc, char *argv[])
     }
 
     glfwMakeContextCurrent(window);
+#ifdef HAVE_GLAD
     gladLoadGL();
+#endif
 
     glfwSetFramebufferSizeCallback(window, reshape);
     glfwSetKeyCallback(window, key);
