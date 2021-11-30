@@ -1,0 +1,53 @@
+# GitHub workflow to merge commits > n-days from a work branch to trunk.
+#
+# this is a low-overhead workflow implementing a time lock intended to
+# allow people to rebase on a work branch but avoid rebases on trunk.
+#
+# the workflow is scheduled to fast-forward the target branch to the
+# most recent commit in the source branch that is older than n-days.
+#
+# if there is a commit older than n-days common to both branches, the
+# action will do nothing. the action will error in the case of commits
+# in the source branch older than n-days that can't be fast forwarded.
+#
+# to use this workflow, one must create a secret named REPO_TOKEN
+# on the repository in question, which itself contains a personal
+# access token with repo write permissions.
+#
+# environment variables:
+#
+# - source_ref : source branch to merge from
+# - target_ref : target branch to fast forward
+# - date_spec  : date expression specifying the time period
+
+name: Merge commits > n-days from work branch to trunk
+on:
+  schedule:
+    - cron:  '5 12 * * *'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      source_ref: work
+      target_ref: trunk
+      date_spec: '-14 day'
+    steps:
+    - name: Checkout source branch
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ env.target_ref }}
+        persist-credentials: false
+    - name: Find recent commit
+      run: |
+        git fetch
+        echo "commit_hash=$(git log -n1 --no-show-signature --format=format:%H \
+            --before=$(date --date="$(date) ${{ env.date_spec }}" +%Y-%m-%d) \
+             origin/${{ env.source_ref }})" >> $GITHUB_ENV
+    - name: Merge recent commits
+      run: |
+        git merge --ff-only ${{ env.commit_hash }}
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.REPO_TOKEN }}
+        branch: ${{ env.target_ref }}
