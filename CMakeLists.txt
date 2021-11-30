@@ -25,7 +25,7 @@ if (HAVE_LIB_M)
 endif (HAVE_LIB_M)
 
 find_package(PkgConfig)
-pkg_check_modules(GLFW3 REQUIRED glfw3)
+pkg_check_modules(GLFW3 glfw3)
 
 # Find OpenGL library
 include(FindOpenGL)
