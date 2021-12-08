@@ -43,10 +43,10 @@ typedef struct zoom_state {
 static const char* frag_shader_filename = "shaders/cube.fsh";
 static const char* vert_shader_filename = "shaders/cube.vsh";
 
-static GLfloat angle = 0.f;
+static GLfloat t = 0.f;
 static bool help = 0;
 static bool debug = 0;
-static bool animation = 0;
+static bool animation = 1;
 static GLuint program;
 static mat4x4 v, p;
 static model_object_t mo[1];
@@ -149,12 +149,12 @@ static void model_object_draw(model_object_t *mo)
 
 static void draw()
 {
-    glClearColor(1.f, 1.f, 1.f, 1.f);
+    glClearColor(0.11f, 0.54f, 0.54f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     vec3 model_scale = { 1.0f, 1.0f, 1.0f };
     vec3 model_trans = { 0.0f, 0.0f, 0.0f };
-    vec3 model_rot = { 0.0f, angle, 0.0f };
+    vec3 model_rot = { 0.25f * t, 0.5f * t, 0.75f * t };
     vec3 view_scale = { 1.0f, 1.0f, 1.0f };
     vec3 view_trans = { state.origin[0] * 0.01f, state.origin[1] * 0.01f, -state.zoom };
 
@@ -173,7 +173,7 @@ static void animate()
     delta_time = current_time - last_time;
 
     if (animation) {
-        angle += 100.f * delta_time;
+        t += delta_time * 60.0f;
     }
 }
 
