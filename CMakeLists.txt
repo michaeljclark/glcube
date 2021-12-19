@@ -102,3 +102,6 @@ if (OPENGL_EXAMPLES)
         endif ()
     endforeach(prog)
 endif (OPENGL_EXAMPLES)
+
+add_executable(test_maj src/test_maj.c)
+target_link_libraries(test_maj m)
