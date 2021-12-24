@@ -38,6 +38,24 @@ uint gamma1(uint b) { return ror(b, 17) ^ ror(b, 19) ^ (b >> 10); }
 vec2 unorm(uvec2 n) { return uvec2(n & uvec2((1u<<23)-1u)) / vec2((1u<<23)-1u); }
 vec2 trunc(vec2 uv, float d) { return floor(uv / d) * d; }
 
+uvec2 maj2_extract(vec2 uv)
+{
+    /*
+     * extract 48-bits of entropy from mantissas to create truncated
+     * two word initialization vector 'W' composed using the 48-bits
+     * of 'uv' entropy rotated and copied to keep the field equalized.
+     * the exponent is ignored because the inputs are expected to be
+     * normalized 'uv' values such as texture coordinates. it would be
+     * beneficial to include the exponent entropy but we can't depend
+     * on frexp or ilogb and log2 would be inaccurate.
+     */
+    vec2 s = sign(uv);
+    uint x = uint(abs(uv.x) * float(1u<<23)) | (uint(s.x < 0) << 23);
+    uint y = uint(abs(uv.y) * float(1u<<23)) | (uint(s.y < 0) << 23);
+
+    return uvec2((x) | (y << 24), (y >> 8) | (x << 16));
+}
+
 vec2 maj2_random(vec2 uv)
 {
     uint H[8] = uint[] ( 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u );
@@ -45,18 +63,10 @@ vec2 maj2_random(vec2 uv)
     uint T0,T1;
     int i;
 
-    /*
-     * extract 48-bits of entropy from mantissas to create truncated
-     * two word initialization vector 'W' composed using the 48-bits
-     * of 'uv' entropy rotated and copied to keep the field equalized.
-     * exponent is ignored as the inputs are normalized 'uv' values.
-     */
-    vec2 s = sign(uv); /* note: we don't have frexp in early GLSL */
-    uint x = uint(abs(uv.x) * float(1u<<23)) | (uint(s.x < 0) << 23);
-    uint y = uint(abs(uv.y) * float(1u<<23)) | (uint(s.y < 0) << 23);
+    uvec2 st = maj2_extract(uv);
 
-    W[0] = x | (y << 24);
-    W[1] = (y >> 8) | (x << 16);
+    W[0] = st.x;
+    W[1] = st.y;
 
     for (i=0; i<NROUNDS; i++) {
         W[i] = gamma1(W[(i-2)&1]) + W[(i-7)&1] + gamma0(W[(i-15)&1]) + W[(i-16)&1];
