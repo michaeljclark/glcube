@@ -17,7 +17,7 @@ out vec3 v_fragPos;
 out vec3 v_lightDir;
 
 #define LINEAR_Z 1
-//#define LOGARITHMIC_Z 1
+#define LOGARITHMIC_Z 0
 
 const float C = 0.000001, near = 5.0, far = 1e9;
 
