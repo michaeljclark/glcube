@@ -369,7 +369,7 @@ int main(int argc, char *argv[])
 
     while(!glfwWindowShouldClose(window)) {
         animate();
-        draw(&mo[0]);
+        draw();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
