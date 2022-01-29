@@ -40,8 +40,8 @@ typedef struct zoom_state {
     vec3 rotation;
 } zoom_state_t;
 
-static const char* frag_shader_filename = "shaders/cube.fsh";
-static const char* vert_shader_filename = "shaders/cube.vsh";
+static const char* frag_shader_filename = "shaders/cube.v120.fsh";
+static const char* vert_shader_filename = "shaders/cube.v120.vsh";
 
 static GLfloat t = 0.f;
 static bool help = 0;

@@ -8,37 +8,43 @@
  * coherent noise. vector argument can be truncated prior to increase grain.
  */
 
-#version 150
+/* OpenGL 2.1, GLSL v1.20 plus GL_EXT_gpu_shader4 extension */
+#version 120
+#extension GL_EXT_gpu_shader4 : enable
 
-in vec3 v_normal;
-in vec2 v_uv;
-in vec4 v_color;
-in vec3 v_fragPos;
-in vec3 v_lightDir;
+varying vec3 v_normal;
+varying vec2 v_uv;
+varying vec4 v_color;
+varying vec3 v_fragPos;
+varying vec3 v_lightDir;
 
-out vec4 outFragColor;
+varying vec4 outFragColor;
 
 #define NROUNDS 2
 
 /* first 8 rounds of the SHA-256 k constant */
-uint sha256_k[8] = uint[]
+int sha256_k[8] = int[]
 (
-    0x428a2f98u, 0x71374491u, 0xb5c0fbcfu, 0xe9b5dba5u,
-    0x3956c25bu, 0x59f111f1u, 0x923f82a4u, 0xab1c5ed5u
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+    0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5
 );
 
-uint ror(uint x, int d) { return (x >> d) | (x << (32-d)); }
-uint sigma0(uint h1) { return ror(h1, 2) ^ ror(h1, 13) ^ ror(h1, 22); }
-uint sigma1(uint h4) { return ror(h4, 6) ^ ror(h4, 11) ^ ror(h4, 25); }
-uint ch(uint x, uint y, uint z) { return z ^ (x & (y ^ z)); }
-uint maj(uint x, uint y, uint z) { return (x & y) ^ ((x ^ y) & z); }
-uint gamma0(uint a) { return ror(a, 7) ^ ror(a, 18) ^ (a >> 3); }
-uint gamma1(uint b) { return ror(b, 17) ^ ror(b, 19) ^ (b >> 10); }
+/* GLSL 1.2 does not support uint so we implement logical right shift  */
+int srl(int x, int y) { return x >> y ^ x >> 31 << 31; }
+int sll(int x, int y) { return x << x; }
 
-vec2 unorm(uvec2 n) { return uvec2(n & uvec2((1u<<23)-1u)) / vec2((1u<<23)-1u); }
+int ror(int x, int d) { return srl(x, d) | sll(x, (32-d)); }
+int sigma0(int h1) { return ror(h1, 2) ^ ror(h1, 13) ^ ror(h1, 22); }
+int sigma1(int h4) { return ror(h4, 6) ^ ror(h4, 11) ^ ror(h4, 25); }
+int ch(int x, int y, int z) { return z ^ (x & (y ^ z)); }
+int maj(int x, int y, int z) { return (x & y) ^ ((x ^ y) & z); }
+int gamma0(int a) { return ror(a, 7) ^ ror(a, 18) ^ srl(a, 3); }
+int gamma1(int b) { return ror(b, 17) ^ ror(b, 19) ^ srl(b, 10); }
+
+vec2 unorm(ivec2 n) { return ivec2(n & ivec2((1<<23)-1)) / vec2((1<<23)-1); }
 vec2 trunc(vec2 uv, float d) { return floor(uv / d) * d; }
 
-uvec2 maj2_extract(vec2 uv)
+ivec2 maj2_extract(vec2 uv)
 {
     /*
      * extract 48-bits of entropy from mantissas to create truncated
@@ -50,20 +56,20 @@ uvec2 maj2_extract(vec2 uv)
      * on frexp or ilogb and log2 would be inaccurate.
      */
     vec2 s = sign(uv);
-    uint x = uint(abs(uv.x) * float(1u<<23)) | (uint(s.x < 0) << 23);
-    uint y = uint(abs(uv.y) * float(1u<<23)) | (uint(s.y < 0) << 23);
+    int x = int(abs(uv.x) * float(1<<23)) | (int(s.x < 0) << 23);
+    int y = int(abs(uv.y) * float(1<<23)) | (int(s.y < 0) << 23);
 
-    return uvec2((x) | (y << 24), (y >> 8) | (x << 16));
+    return ivec2((x) | (y << 24), (y >> 8) | (x << 16));
 }
 
 vec2 maj2_random(vec2 uv)
 {
-    uint H[8] = uint[] ( 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u );
-    uint W[2];
-    uint T0,T1;
+    int H[8] = int[] ( 0, 0, 0, 0, 0, 0, 0, 0 );
+    int W[2];
+    int T0,T1;
     int i;
 
-    uvec2 st = maj2_extract(uv);
+    ivec2 st = maj2_extract(uv);
 
     W[0] = st.x;
     W[1] = st.y;
@@ -86,7 +92,7 @@ vec2 maj2_random(vec2 uv)
         H[0] = T0 + T1;
     }
 
-    return unorm(uvec2(H[0] ^ H[1] ^ H[2] ^ H[3],
+    return unorm(ivec2(H[0] ^ H[1] ^ H[2] ^ H[3],
                        H[4] ^ H[5] ^ H[6] ^ H[7]));
 }
 
@@ -99,5 +105,5 @@ void main()
   float ambient = 0.1;
   float diff = max(dot(v_normal, v_lightDir), 0.0);
   vec4 finalColor = (ambient + diff + r) * v_color;
-  outFragColor = vec4(finalColor.rgb, v_color.a);
+  gl_FragColor = vec4(finalColor.rgb, v_color.a);
 }
