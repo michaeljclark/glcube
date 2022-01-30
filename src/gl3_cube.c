@@ -356,6 +356,7 @@ int main(int argc, char *argv[])
     }
 
     glfwMakeContextCurrent(window);
+
 #ifdef HAVE_GLAD
     gladLoadGL();
 #endif
