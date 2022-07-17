@@ -72,13 +72,15 @@ void test_maj(const char* name, int NROUNDS, ullong count, ullong range, vec2(*f
     for (ullong i = 0; i < count; i++) {
         vec2 p = f(i, range);
         vec2 q = maj_random(p, NROUNDS);
-        sum += q;
-        var += (vec2) { (q[0]-.5f)*(q[0]-.5f), (q[1]-.5f)*(q[1]-.5f) };
+        sum.a[0] += q.a[0];
+        sum.a[1] += q.a[1];
+        var.a[0] += (q.a[0]-.5f)*(q.a[0]-.5f);
+        var.a[1] += (q.a[1]-.5f)*(q.a[1]-.5f);
     }
 
     printf("%-32s%12s%12.5f%12.5f%12.5f%12.5f%12.5f%12.5f\n",
-        name, format_comma(count), sum[0]/count, sum[1]/count,
-        var[0]/count, var[1]/count, sqrt(var[0]/count), sqrt(var[1]/count));
+        name, format_comma(count), sum.a[0]/count, sum.a[1]/count,
+        var.a[0]/count, var.a[1]/count, sqrt(var.a[0]/count), sqrt(var.a[1]/count));
 }
 
 void test_header(const char *name)

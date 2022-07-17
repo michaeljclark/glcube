@@ -18,6 +18,10 @@
 cmake_minimum_required (VERSION 3.12)
 project(glcube VERSION 0.0.1)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 include(CheckLibraryExists)
 check_library_exists(m sqrtf "" HAVE_LIB_M)
 if (HAVE_LIB_M)
@@ -110,5 +114,7 @@ if (OPENGL_EXAMPLES)
     endforeach(prog)
 endif (OPENGL_EXAMPLES)
 
-add_executable(test_maj src/test_maj.c)
-target_link_libraries(test_maj m)
+add_executable(test_maj2 src/test_maj2.c)
+target_link_libraries(test_maj2 ${EXTRA_LIBS})
+
+add_executable(bench_maj2 src/bench_maj2.cc)
