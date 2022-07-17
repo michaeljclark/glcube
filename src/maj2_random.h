@@ -76,7 +76,7 @@ static vec2 maj_random(vec2 uv, uint NROUNDS)
     W[1] = st[1];
 
     for (i=0; i<NROUNDS; i++) {
-        W[i] = gamma1(W[(i-2)&1]) + W[(i-7)&1] + gamma0(W[(i-15)&1]) + W[(i-16)&1];
+        W[i&1] = gamma1(W[(i-2)&1]) + W[(i-7)&1] + gamma0(W[(i-15)&1]) + W[(i-16)&1];
     }
 
     /* we use N rounds instead of 64 and alternate 2 words of iv in W */
