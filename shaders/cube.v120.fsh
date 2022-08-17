@@ -1,10 +1,10 @@
 /*
- * maj2_random
+ * maj2random
  *
- * maj2_random is a simplified floating point hash function derived from SHA-2,
+ * maj2random is a simplified floating point hash function derived from SHA-2,
  * retaining its high quality entropy compression function modified to permute
  * entropy from a vec2 (designed for UV coordinates) returning float values
- * between 0.0 and 1.0. since maj2_random is a hash function it will return
+ * between 0.0 and 1.0. since maj2random is a hash function it will return
  * coherent noise. vector argument can be truncated prior to increase grain.
  */
 
@@ -62,7 +62,7 @@ ivec2 maj2_extract(vec2 uv)
     return ivec2((x) | (y << 24), (y >> 8) | (x << 16));
 }
 
-vec2 maj2_random(vec2 uv)
+vec2 maj2random(vec2 uv)
 {
     int H[8] = int[] ( 0, 0, 0, 0, 0, 0, 0, 0 );
     int W[2];
@@ -99,8 +99,8 @@ vec2 maj2_random(vec2 uv)
 void main()
 {
   // uncomment for temporal surface stability i.e. increase grain
-  //float r = maj2_random(trunc(v_uv, 0.1)).x * 0.5;
-  float r = maj2_random(v_uv).x * 0.5;
+  //float r = maj2random(trunc(v_uv, 0.1)).x * 0.5;
+  float r = maj2random(v_uv).x * 0.5;
 
   float ambient = 0.1;
   float diff = max(dot(v_normal, v_lightDir), 0.0);
