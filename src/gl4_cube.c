@@ -134,7 +134,7 @@ static void model_object_cube(model_object_t *mo, float s, vec4f col)
     index_buffer_add_primitves(&mo->ib, primitive_topology_quads, 6, idx);
 }
 
-static float degrees_to_radians(float a) { return a * M_PI / 180.0f; }
+static float degrees_to_radians(float a) { return a * (float)M_PI / 180.0f; }
 
 static void model_matrix_transform(mat4x4 m, vec3 scale, vec3 trans, vec3 rot)
 {
@@ -235,8 +235,8 @@ static void mouse_button(GLFWwindow* window, int button, int action, int mods)
 
 static void cursor_position(GLFWwindow* window, double xpos, double ypos)
 {
-    state.mouse_pos[0] = xpos;
-    state.mouse_pos[1] = ypos;
+    state.mouse_pos[0] = (float)xpos;
+    state.mouse_pos[1] = (float)ypos;
 
     if (mouse_left_drag) {
         state.origin[0] += state.mouse_pos[0] - state_save.mouse_pos[0];
