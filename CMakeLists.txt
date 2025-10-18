@@ -67,7 +67,7 @@ if (EXTERNAL_GLFW)
     )
     set(GLFW_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/third_party/glfw3/include")
     set(GLFW_LIBRARY_DIR "${CMAKE_BINARY_DIR}/GLFW-prefix/src/GLFW-build/src/")
-    set(GLFW_LIBRARIES glfw3 pthread dl)
+    set(GLFW_LIBRARIES glfw3)
     include_directories(${GLFW_INCLUDE_DIRS})
     link_directories(${GLFW_LIBRARY_DIR})
     list(APPEND GLFW_LIBS_ALL ${GLFW_LIBRARIES} ${EXTRA_LIBS})
@@ -85,7 +85,7 @@ if (EXTERNAL_GLAD)
         SOURCE_DIR "${CMAKE_BINARY_DIR}/third_party/glad"
         STEP_TARGETS build
         EXCLUDE_FROM_ALL TRUE
-        CMAKE_ARGS -DGLAD_EXPORT=OFF
+        CMAKE_ARGS -DGLAD_EXPORT=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5
     )
     set(GLAD_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/GLAD-prefix/src/GLAD-build/include/")
     set(GLAD_LIBRARY_DIR "${CMAKE_BINARY_DIR}/GLAD-prefix/src/GLAD-build/")
