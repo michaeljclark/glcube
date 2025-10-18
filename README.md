@@ -26,9 +26,21 @@ UVs to create deterministic surface noise.
 
 ## Build Instructions
 
+glcube has been tested on the following operating systems:
+
+- Ubuntu 24.04 LTS
+- FreeBSD 14.3
+- Windows 11
+- macOS 15
+
+glcube requires the following dependencies:
+
+- Microsoft Windows plus Visual Studio 2022 with CMake and C/C++.
+- Apple macOS with XCode Developer Tools and CMake plus Ninja.
+- Linux or FreeBSD with GCC or Clang and CMake plus Ninja.
+
 ```
-sudo apt-get install -y cmake ninja-build
-cmake -G Ninja -B build .
+cmake -B build -G Ninja
 cmake --build build
 ```
 
