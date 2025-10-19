@@ -23,7 +23,7 @@
 #include <GLFW/glfw3.h>
 
 #include "linmath.h"
-#include "gl2_util.h"
+#include "gl2_nano.h"
 
 typedef struct mvp_t {
     mat4x4 projection;

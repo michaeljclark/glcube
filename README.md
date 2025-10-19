@@ -1,7 +1,7 @@
 # glcube
 
 _glcube_ is OpenGL cube demo in C11 using programmable shaders. The demo
-uses the _linmath.h_ and _gl2_util.h_ headers which contain a simple
+uses the _linmath.h_ and _gl2_nano.h_ headers which contain a simple
 vertex and index buffer abstraction, functions for loading and compiling
 shaders plus basic mouse navigation.
 
@@ -9,7 +9,7 @@ shaders plus basic mouse navigation.
 
 ## Introduction
 
-_glcube_ is an app skeleton using _gl2_util.h_, a nano framework for
+_glcube_ is an app skeleton using _gl2_nano.h_, a nano framework for
 creating apps using the modern OpenGL and GLSL shader pipeline. The
 `CMakeLists.txt` is intended to be used as a template for tiny demos.
 
@@ -18,10 +18,10 @@ UVs to create deterministic surface noise.
 
 ## Project Structure
 
-- `src/gl2_cube.c` - OpenGL 2.1 cube using the `gl2_util.h` shader loader.
-- `src/gl3_cube.c` - OpenGL 3.2 cube using the `gl2_util.h` shader loader.
-- `src/gl4_cube.c` - OpenGL 4.5 cube using the `gl2_util.h` shader loader.
-- `src/gl2_util.h` - header functions for OpenGL buffers and shaders.
+- `src/gl2_cube.c` - OpenGL 2.1 cube using the `gl2_nano.h` shader loader.
+- `src/gl3_cube.c` - OpenGL 3.2 cube using the `gl2_nano.h` shader loader.
+- `src/gl4_cube.c` - OpenGL 4.5 cube using the `gl2_nano.h` shader loader.
+- `src/gl2_nano.h` - header functions for OpenGL buffers and shaders.
 - `src/linmath.h` - public domain linear algebra header functions.
 
 ## Build Instructions
