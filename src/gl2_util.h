@@ -360,18 +360,18 @@ static buffer load_file(const char *filename)
     size_t nread;
 
     if ((f = fopen(filename, "r")) == NULL) {
-        printf("gears_create_shader_from_file: open: %s: %s",
+        printf("load_file: open: %s: %s\n",
             filename, strerror(errno));
         exit(1);
     }
     if (fstat(fileno(f), &statbuf) < 0) {
-        printf("gears_create_shader_from_file: stat: %s: %s",
+        printf("load_file: stat: %s: %s\n",
             filename, strerror(errno));
         exit(1);
     }
     buf = (char*)malloc(statbuf.st_size);
     if ((nread = fread(buf, 1, statbuf.st_size, f)) != statbuf.st_size) {
-        printf("gears_create_shader_from_file: fread: %s: expected %zu got %zu\n",
+        printf("load_file: fread: %s: expected %zu got %zu\n",
             filename, (size_t)statbuf.st_size, nread);
         exit(1);
     }
