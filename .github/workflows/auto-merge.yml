@@ -21,9 +21,10 @@
 # - date_spec  : date expression specifying the time period
 
 name: Merge commits > n-days from work branch to trunk
-on:
-  schedule:
-    - cron:  '5 12 * * *'
+on: workflow_dispatch
+#on:
+#  schedule:
+#    - cron:  '5 12 * * *'
 jobs:
   build:
     runs-on: ubuntu-latest
