@@ -9,12 +9,12 @@ shaders plus basic mouse navigation.
 
 ## Introduction
 
-_glcube_ is an app skeleton using _gl2_nano.h_, a nano framework for
-creating apps using the modern OpenGL and GLSL shader pipeline. The
-`CMakeLists.txt` is intended to be used as a template for tiny demos.
+_glcube_ is an app skeleton using _gl2_nano_, a framework for creating
+apps using the modern OpenGL and GLSL shader pipeline. this work is
+intended to be used as a template for tiny OpenGL demos.
 
 The shader uses a noise function derived from _SHA-2_, combined with
-UVs to create deterministic surface noise.
+UVs to create surface noise.
 
 ## Project Structure
 
