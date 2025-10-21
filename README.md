@@ -1,9 +1,9 @@
 # glcube
 
-_glcube_ is OpenGL cube demo in C11 using programmable shaders. The demo
-uses the _linmath.h_ and _gl2_nano.h_ headers which contain a simple
-vertex and index buffer abstraction, functions for loading and compiling
-shaders plus basic mouse navigation.
+_glcube_ is an OpenGL demo written in C11 that renders a rotating cube
+using programmable shaders. it depends on _gl2_nano_, a lightweight helper
+library that provides a simple vertex and index buffer abstraction, along
+with utilities for loading, compiling, and linking OpenGL shader programs.
 
 ![glcube](/images/glcube.png)
 
@@ -11,10 +11,9 @@ shaders plus basic mouse navigation.
 
 _glcube_ is an app skeleton using _gl2_nano_, a framework for creating
 apps using the modern OpenGL and GLSL shader pipeline. this work is
-intended to be used as a template for tiny OpenGL demos.
-
-The shader uses a noise function derived from _SHA-2_, combined with
-UVs to create surface noise.
+intended to be used as a template for tiny OpenGL demos. The shader uses
+the [maj2random](https://github.com/michaeljclark/maj2random) noise function
+derived from _SHA-2_, combined with UVs to create surface noise.
 
 ## Project Structure
 
@@ -54,10 +53,10 @@ _gl2_cube_ is a 3D cube renderer using OpenGL 2.x and GLSL shaders.
 
 ### gl3_cube
 
-_gl3_cube_ is mostly the same as _gl2_cube_ with the addition of vertex
-array objects which were added in OpenGL 3.x.
+_gl3_cube_ is the same as _gl2_cube_ with the addition of vertex array
+objects from OpenGL 3.x.
 
 ### gl4_cube
 
-_gl4_cube_ is mostly the same as _gl3_cube_ with the addition of uniform
-buffer objects which were added in OpenGL 4.x.
+_gl4_cube_ is the same as _gl3_cube_ with the addition of uniform buffer
+objects from OpenGL 4.x.
