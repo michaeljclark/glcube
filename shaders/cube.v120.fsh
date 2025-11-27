@@ -59,7 +59,7 @@ ivec2 maj2_extract(vec2 uv)
     int x = int(abs(uv.x) * float(1<<23)) | (int(s.x < 0) << 23);
     int y = int(abs(uv.y) * float(1<<23)) | (int(s.y < 0) << 23);
 
-    return ivec2((x) | (y << 24), (y >> 8) | (x << 16));
+    return ivec2(x ^ ((x >> 8) | (y << 16)), y ^ ((x >> 16) | (y << 8)));
 }
 
 vec2 maj2random(vec2 uv)
@@ -73,10 +73,6 @@ vec2 maj2random(vec2 uv)
 
     W[0] = st.x;
     W[1] = st.y;
-
-    for (i=0; i<NROUNDS; i++) {
-        W[i&1] = gamma1(W[(i-2)&1]) + W[(i-7)&1] + gamma0(W[(i-15)&1]) + W[(i-16)&1];
-    }
 
     /* we use N=2 rounds instead of 64 and alternate 2 words of iv in W */
     for (i=0; i<NROUNDS; i++) {
