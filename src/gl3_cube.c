@@ -181,7 +181,7 @@ static void animate()
     }
 }
 
-void reshape( GLFWwindow* window, int width, int height )
+void reshape(GLFWwindow* window, int width, int height)
 {
     GLfloat h = (GLfloat) height / (GLfloat) width;
 
@@ -242,9 +242,9 @@ static void cursor_position(GLFWwindow* window, double xpos, double ypos)
     }
 }
 
-void key( GLFWwindow* window, int k, int s, int action, int mods )
+void key(GLFWwindow* window, int k, int s, int action, int mods)
 {
-    if( action != GLFW_PRESS ) return;
+    if(action != GLFW_PRESS) return;
 
     float shiftz = (mods & GLFW_MOD_SHIFT ? -1.f : 1.f);
 
@@ -335,10 +335,10 @@ int main(int argc, char *argv[])
 
     parse_options(argc, argv);
 
-    if( !glfwInit() )
+    if(!glfwInit())
     {
-        fprintf( stderr, "Failed to initialize GLFW\n" );
-        exit( EXIT_FAILURE );
+        fprintf(stderr, "Failed to initialize GLFW\n");
+        exit(EXIT_FAILURE);
     }
 
     glfwWindowHint(GLFW_SAMPLES, 4);
@@ -347,12 +347,12 @@ int main(int argc, char *argv[])
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 
-    window = glfwCreateWindow( 1024, 1024, "OpenGL Cube", NULL, NULL );
+    window = glfwCreateWindow(1024, 1024, "OpenGL Cube", NULL, NULL);
     if (!window)
     {
-        fprintf( stderr, "Failed to open GLFW window\n" );
+        fprintf(stderr, "Failed to open GLFW window\n");
         glfwTerminate();
-        exit( EXIT_FAILURE );
+        exit(EXIT_FAILURE);
     }
 
     glfwMakeContextCurrent(window);
@@ -384,4 +384,3 @@ int main(int argc, char *argv[])
 
     exit(EXIT_SUCCESS);
 }
-
