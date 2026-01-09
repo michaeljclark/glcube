@@ -167,6 +167,16 @@ static void model_object_draw(model_object_t *mo)
 
 static void draw()
 {
+    static float last_time, current_time, delta_time;
+
+    last_time = current_time;
+    current_time = (float) glfwGetTime();
+    delta_time = current_time - last_time;
+
+    if (animation) {
+        t += delta_time * 60.0f;
+    }
+
     glClearColor(0.11f, 0.54f, 0.54f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -180,19 +190,6 @@ static void draw()
     model_matrix_transform(mo[0].v, view_scale, view_trans, state.rotation);
     model_update_matrices(&mo[0]);
     model_object_draw(&mo[0]);
-}
-
-static float last_time, current_time, delta_time;
-
-static void animate()
-{
-    last_time = current_time;
-    current_time = (float) glfwGetTime();
-    delta_time = current_time - last_time;
-
-    if (animation) {
-        t += delta_time * 60.0f;
-    }
 }
 
 void reshape(GLFWwindow* window, int width, int height)
@@ -404,7 +401,6 @@ int main(int argc, char *argv[])
     reshape(window, width, height);
 
     while(!glfwWindowShouldClose(window)) {
-        animate();
         draw();
         glfwSwapBuffers(window);
         glfwPollEvents();
