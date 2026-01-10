@@ -237,7 +237,7 @@ static void cursor_position(GLFWwindow* window, double xpos, double ypos)
 
 void key(GLFWwindow* window, int k, int s, int action, int mods)
 {
-    if(action != GLFW_PRESS) return;
+    if (action != GLFW_PRESS) return;
 
     float shiftz = (mods & GLFW_MOD_SHIFT ? -1.f : 1.f);
 
